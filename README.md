@@ -18,6 +18,7 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
 
 - Node.js (v18 or higher)
 - npm (v9 or higher)
+- Docker (for database)
 
 ### Installation
 
@@ -29,8 +30,27 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
    ```
 
 2. Install dependencies for all workspaces:
+
    ```bash
    npm install
+   ```
+
+3. Set up environment variables:
+
+   ```bash
+   cd server
+   cp .env.sample .env
+   ```
+
+4. Start the database:
+
+   ```bash
+   npm run db:setup
+   ```
+
+5. Run database migrations:
+   ```bash
+   npm run db:migrate
    ```
 
 ### Project Structure
@@ -43,7 +63,10 @@ openchat/
 │   └── package.json
 ├── server/          # Express + Socket.io backend
 │   ├── src/
+│   ├── prisma/      # Database schema and migrations
+│   ├── .env.sample  # Environment variables template
 │   └── package.json
+├── docker-compose.yml  # Database configuration
 ├── package.json     # Root workspace configuration
 └── README.md
 ```
@@ -61,6 +84,22 @@ npm run dev:client
 
 # Start server only (backend)
 npm run dev:server
+```
+
+#### Database Management
+
+```bash
+# Start PostgreSQL database
+npm run db:setup
+
+# Stop database
+npm run db:down
+
+# Run database migrations
+npm run db:migrate
+
+# Reset database
+npm run db:reset
 ```
 
 #### Code Quality
@@ -91,9 +130,20 @@ npm run lint --workspace=server
 
 - **Client (Frontend)**: http://localhost:5173
 - **Server (Backend)**: http://localhost:3000
+- **Database**: PostgreSQL on port 5432
 
 ### Technology Stack
 
 - **Frontend**: React, Vite, ES Modules
 - **Backend**: Express.js, Socket.io, ES Modules
-- **Development**: ESLint, npm workspaces
+- **Database**: PostgreSQL, Prisma ORM
+- **Development**: ESLint, npm workspaces, Docker
+
+### Database Configuration
+
+The application uses PostgreSQL with Prisma ORM. The database configuration is managed through:
+
+- **docker-compose.yml**: Database container setup
+- **server/prisma/schema.prisma**: Database schema definition
+- **server/.env**: Environment variables (copy from .env.sample)
+
