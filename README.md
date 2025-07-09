@@ -112,6 +112,44 @@ npm run lint
 npm run lint:fix
 ```
 
+#### Testing
+
+The project includes minimal unit tests for both client and server components:
+
+**Client Tests (React + Vitest):**
+
+- Component rendering tests
+- User interaction tests (button clicks, form interactions)
+- UI element presence validation
+
+**Server Tests (Express + Socket.io + Vitest):**
+
+- HTTP endpoint testing
+- Socket.io connection handling
+- Database health checks
+- Error handling
+
+```bash
+# Run tests for both client and server
+npm run test
+
+# Run client tests only
+npm run test:client
+
+# Run server tests only
+npm run test:server
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage --workspace=client
+npm run test:coverage --workspace=server
+
+# Run tests with UI interface (client only)
+npm run test:ui --workspace=client
+```
+
 #### Individual Workspace Commands
 
 ```bash
@@ -137,6 +175,7 @@ npm run lint --workspace=server
 - **Frontend**: React, Vite, ES Modules
 - **Backend**: Express.js, Socket.io, ES Modules
 - **Database**: PostgreSQL, Prisma ORM
+- **Testing**: Vitest, Testing Library, Supertest, Happy DOM
 - **Development**: ESLint, npm workspaces, Docker
 
 ### Database Configuration
@@ -146,4 +185,3 @@ The application uses PostgreSQL with Prisma ORM. The database configuration is m
 - **docker-compose.yml**: Database container setup
 - **server/prisma/schema.prisma**: Database schema definition
 - **server/.env**: Environment variables (copy from .env.sample)
-

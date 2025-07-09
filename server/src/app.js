@@ -1,0 +1,40 @@
+import express from 'express'
+import { PrismaClient } from '@prisma/client'
+
+// Create Express app factory
+export const createApp = () => {
+  const app = express()
+  const prisma = new PrismaClient()
+
+  // Basic Express route
+  app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' })
+  })
+
+  // Health check endpoint
+  app.get('/health', async (req, res) => {
+    try {
+      await prisma.$queryRaw`SELECT NOW()`
+      res.json({
+        status: 'healthy',
+        database: 'connected'
+      })
+    } catch (error) {
+      res.status(500).json({
+        status: 'unhealthy',
+        error: error.message
+      })
+    }
+  })
+
+  return app
+}
+
+// Socket.io connection handler
+export const handleSocketConnection = (socket) => {
+  console.log('User connected:', socket.id)
+  
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id)
+  })
+} 
