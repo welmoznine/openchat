@@ -1,0 +1,14 @@
+# Server specific build output
+build/
+dist/
+
+# Development
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Runtime
+*.pid
+*.seed
+*.pid.lock 
