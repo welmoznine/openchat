@@ -8,7 +8,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix"
@@ -20,6 +20,7 @@
   "devDependencies": {
     "@eslint/js": "^9.16.0",
     "eslint": "^9.16.0",
-    "globals": "^15.13.0"
+    "globals": "^15.13.0",
+    "nodemon": "^3.0.2"
   }
 }
