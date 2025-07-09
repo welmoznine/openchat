@@ -12,6 +12,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint src/**/*.js",
     "lint:fix": "eslint src/**/*.js --fix",
+    "db:setup": "cd ../ && docker compose up -d",
+    "db:down": "cd ../ && docker compose down",
     "db:migrate": "dotenv -e .env -- prisma migrate dev",
     "db:reset": "dotenv -e .env -- prisma migrate reset"
   },
