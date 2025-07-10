@@ -15,7 +15,7 @@ router.post('/login', async (req, res) => {
 })
 
 router.post('/logout', async (req, res) => {
-    // TODO: Implement registration logic
+    // TODO: Implement logout logic
     console.log('Logout Endpoint');
     res.status(201).json({ message: 'TODO: Implement Logout Endpoint'})
 })
