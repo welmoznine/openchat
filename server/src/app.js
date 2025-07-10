@@ -1,10 +1,13 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
+import authRoutes from './routes/auth.js';
 
 // Create Express app factory
 export const createApp = () => {
   const app = express()
   const prisma = new PrismaClient()
+
+  app.use('/api/auth', authRoutes);
 
   // Basic Express route
   app.get('/', (req, res) => {
