@@ -32,8 +32,6 @@ describe('Express Server', () => {
         database: 'connected'
       })
     })
-
-
   })
 
   describe('404 handling', () => {

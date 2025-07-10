@@ -2,6 +2,8 @@
 
 **CS 467/Summer/2025 Capstone Project**
 
+[![CI](https://github.com/yshrkume/openchat/actions/workflows/ci.yml/badge.svg)](https://github.com/yshrkume/openchat/actions/workflows/ci.yml)
+
 An open-source, fully customizable web-based chat platform that bridges the gap between specialized communication tools like Slack and Discord.
 
 ## Team Members
@@ -16,8 +18,8 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
 
 ### Prerequisites
 
-- Node.js (v18 or higher)
-- npm (v9 or higher)
+- Node.js (v20 or higher)
+- npm (v10 or higher)
 - Docker (for database)
 
 ### Installation
@@ -126,7 +128,6 @@ The project includes minimal unit tests for both client and server components:
 
 - HTTP endpoint testing
 - Socket.io connection handling
-- Database health checks
 - Error handling
 
 ```bash
@@ -185,3 +186,14 @@ The application uses PostgreSQL with Prisma ORM. The database configuration is m
 - **docker-compose.yml**: Database container setup
 - **server/prisma/schema.prisma**: Database schema definition
 - **server/.env**: Environment variables (copy from .env.sample)
+
+## CI/CD
+
+This project uses GitHub Actions to run automated workflows for code quality and security.
+
+### Workflows
+
+1. **CI (Continuous Integration)** - `ci.yml`
+   - Runs tests and linting on all branches
+   - Integration tests with PostgreSQL database
+   - Coverage report generation
