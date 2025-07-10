@@ -1,6 +1,10 @@
 {
   "name": "openchat",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "workspaces": [
     "client",
     "server"
