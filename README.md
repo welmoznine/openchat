@@ -128,7 +128,6 @@ The project includes minimal unit tests for both client and server components:
 
 - HTTP endpoint testing
 - Socket.io connection handling
-- Database health checks
 - Error handling
 
 ```bash

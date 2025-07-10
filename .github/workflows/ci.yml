@@ -41,14 +41,9 @@ jobs:
         run: npm run lint
 
       - name: Setup test database
-        run: |
-          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/openchat_test" > server/.env
-          npm run db:migrate
+        run: npm run db:migrate:ci --workspace=server
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/openchat_test
 
-      - name: Run tests
-        run: npm test
-
-      - name: Run coverage
+      - name: Run tests with coverage
         run: npm run test:coverage

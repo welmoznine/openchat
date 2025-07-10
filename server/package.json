@@ -20,6 +20,7 @@
     "db:setup": "cd ../ && docker compose up -d",
     "db:down": "cd ../ && docker compose down",
     "db:migrate": "dotenv -e .env -- prisma migrate dev",
+    "db:migrate:ci": "prisma generate && prisma migrate deploy",
     "db:reset": "dotenv -e .env -- prisma migrate reset"
   },
   "dependencies": {
