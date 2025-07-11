@@ -102,6 +102,9 @@ npm run db:migrate
 
 # Reset database
 npm run db:reset
+
+# Seed database
+npm run db:seed
 ```
 
 #### Code Quality
