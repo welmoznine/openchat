@@ -105,6 +105,9 @@ npm run db:reset
 
 # Seed database
 npm run db:seed
+
+# Open database UI (Prisma Studio)
+npm run db:ui
 ```
 
 #### Code Quality

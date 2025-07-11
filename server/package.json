@@ -24,7 +24,8 @@
     "db:down": "cd ../ && docker compose down",
     "db:migrate": "dotenv -e .env -- prisma migrate dev",
     "db:reset": "dotenv -e .env -- prisma migrate reset",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:ui" : "dotenv -e .env -- prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
