@@ -3,18 +3,25 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  await prisma.user.create({
-    data: {
-      username: 'testuser1',
-      email: 'testuser1@example.com',
+  await prisma.user.upsert({
+    where: { email: 'testuser@example.com' },
+    update: {}, // nothing to update if exists
+    create: {
+      username: 'testuser',
+      email: 'testuser@example.com',
       passwordHash: 'hashed-password'
-    },
-    data: {
+    }
+  });
+
+  await prisma.user.upsert({
+    where: { email: 'testuser2@example.com' },
+    update: {},
+    create: {
       username: 'testuser2',
       email: 'testuser2@example.com',
       passwordHash: 'hashed-password'
-    },
-  })
+    }
+  });
 }
 
 main()
