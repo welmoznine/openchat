@@ -2,7 +2,7 @@ import { useCurrentUser } from "../hooks/auth/useCurrentUser";
 
 const IndexPage = () => {
 
-  const { user, loading, error } = useCurrentUser();
+  const { user, loading } = useCurrentUser();
 
   if (loading) return null;
   if (!user) return null;

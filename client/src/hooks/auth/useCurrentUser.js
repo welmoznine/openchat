@@ -55,7 +55,7 @@ export const useCurrentUser = () => {
             setUser(data);
         })
         .catch((error) => {
-            console.error('useCurrentUser error:', err);
+            console.error('useCurrentUser error:', error);
             setError(error.message);
             localStorage.removeItem('token');
             navigate('/login'); // Redirect back to login
@@ -63,7 +63,7 @@ export const useCurrentUser = () => {
         .finally(() => {
             setLoading(false);
         });
-    }, []);
+    }, [navigate]);
 
     return { user, loading, error };
 }
