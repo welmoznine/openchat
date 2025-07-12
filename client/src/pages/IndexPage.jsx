@@ -9,8 +9,9 @@ const IndexPage = () => {
 
   return (
     <div style={{ padding: "2rem", textAlign: "center" }}>
-      <h1>Welcome to OpenChat {user.username}</h1>
+      <h1>Welcome to OpenChat</h1>
       <p>This is the main page!</p>
+      <p>{user.username}</p>
     </div>
   );
 };
