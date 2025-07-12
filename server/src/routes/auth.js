@@ -91,6 +91,7 @@ router.post('/me', async (req,res) => {
         res.json(user);
 
     } catch (error) {
+        console.error(error);
         return res.status(401).json({ message: 'Invalid or expired token' });
     }
 
