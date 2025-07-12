@@ -33,7 +33,6 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password.'});
         }
 
-        //TODO: This needs to check hashed password w/ bcrypt, first need to setup hash on entry to database
         const validPassword = await bcrypt.compare(password, user.passwordHash);
 
         // Password does not match, return error

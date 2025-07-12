@@ -1,11 +1,17 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
 import authRoutes from './routes/auth.js';
+import cors from 'cors';
 
 // Create Express app factory
 export const createApp = () => {
   const app = express()
   const prisma = new PrismaClient()
+
+  app.use(cors({
+    origin:'http://localhost:5173',
+    credentials: true
+  }))
 
   app.use(express.json());
   app.use('/api/auth', authRoutes);
