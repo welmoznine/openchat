@@ -7,6 +7,7 @@ export const createApp = () => {
   const app = express()
   const prisma = new PrismaClient()
 
+  app.use(express.json());
   app.use('/api/auth', authRoutes);
 
   // Basic Express route

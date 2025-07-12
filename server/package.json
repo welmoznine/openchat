@@ -25,11 +25,13 @@
     "db:migrate": "dotenv -e .env -- prisma migrate dev",
     "db:reset": "dotenv -e .env -- prisma migrate reset",
     "db:seed": "prisma db seed",
-    "db:ui" : "dotenv -e .env -- prisma studio"
+    "db:ui": "dotenv -e .env -- prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^6.11.1",
+    "bcryptjs": "^3.0.2",
     "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
