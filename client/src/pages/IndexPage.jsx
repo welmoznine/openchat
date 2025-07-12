@@ -1,4 +1,3 @@
-import { useCurrentUser } from "../hooks/auth/useCurrentUser";
 
 const IndexPage = () => {
 
