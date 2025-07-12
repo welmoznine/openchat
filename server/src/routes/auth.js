@@ -63,4 +63,37 @@ router.post('/logout', async (req, res) => {
     res.status(200).json({ message: 'TODO: Implement Logout Endpoint'})
 });
 
+router.post('/me', async (req,res) => {
+
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Authorization header missing.'});
+    }
+
+    const token = authHeader.split(' ')[1];  // format: "Bearer <token>"
+
+    try {
+
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const userId = decoded.userId;
+
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                lastLoginAt: true
+            }
+        });
+
+        res.json(user);
+
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+
+});
+
 export default router;
