@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+//import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
@@ -36,7 +36,6 @@ router.post('/login', async (req, res) => {
 
         //TODO: This needs to check hashed password w/ bcrypt, first need to setup hash on entry to database
         //const validPassword = await bcrypt.compare(password, user.password);
-        const validPassword = (password === user.passwordHash) 
 
         // Password does not match, return error
         if (password != user.passwordHash){
