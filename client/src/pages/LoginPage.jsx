@@ -1,16 +1,44 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const LoginPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
+  // TODO: Need to add token validity check
+  // TODO: Need to redirect from login page if user already logged in
 
   const handleLogin = async(e) => {
     e.preventDefault();
-    // TODO: To be implemented
-    console.log("Handle Login");
-    setMessage('To Be Implemented');
+
+    try {
+
+      const resp = await fetch('http://localhost:3000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password}),
+      });
+
+      const data = await resp.json();
+
+      if (resp.ok) {
+        setMessage('Login successful!');
+        localStorage.setItem('token', data.token);
+        navigate('/');
+      } else {
+        setMessage(data.message || 'Login failed.');
+      }
+      
+    } catch (error) {
+      console.error(error);
+      setMessage('An error occurred');
+    }
+
   }
 
   return (
