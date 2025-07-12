@@ -62,7 +62,7 @@ router.post('/login', async (req, res) => {
 router.post('/logout', async (req, res) => {
     // TODO: Implement logout logic
     console.log('Logout Endpoint');
-    res.status(201).json({ message: 'TODO: Implement Logout Endpoint'})
+    res.status(200).json({ message: 'TODO: Implement Logout Endpoint'})
 });
 
 export default router;
