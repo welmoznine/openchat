@@ -13,21 +13,124 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id           String    @id @default(uuid())
-  username     String    @unique @db.VarChar(50)
-  email        String    @unique @db.VarChar(100)
-  passwordHash String    @map("password_hash") @db.VarChar(100)
-  status       Status    @default(OFFLINE)
-  lastLoginAt  DateTime? @map("last_login_at")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+// ---------------------- ENUMS ----------------------
 
-  @@map("Users")
+// Enum to represent user status: offline, online, or away
+enum Status {
+  OFFLINE @map("offline") // Maps to 'offline' in the database
+  ONLINE  @map("online")  // Maps to 'online' in the database
+  AWAY    @map("away")    // Maps to 'away' in the database
 }
 
-enum Status {
-  OFFLINE @map("offline")
-  ONLINE  @map("online")
-  AWAY    @map("away")
+// ---------------------- MODELS ----------------------
+
+model User {
+  id           String    @id @default(uuid())                   // Primary key, UUID
+  username     String    @unique @db.VarChar(50)                // Unique username, 50 characters max
+  email        String    @unique @db.VarChar(100)               // Unique email, 100 characters max
+  passwordHash String    @map("password_hash") @db.VarChar(100) // Password hash, 100 characters max
+  status       Status    @default(OFFLINE)                      // User status (enum), defaults to offline
+  lastLoginAt  DateTime? @map("last_login_at")                  // Nullable last login time
+  createdAt    DateTime  @default(now()) @map("created_at")     // Auto-timestamp for creation
+  updatedAt    DateTime  @updatedAt @map("updated_at")          // Auto-timestamp on update
+
+  sentMessages       DirectMessage[] @relation("SentMessages")     // A user can send many direct messages
+  receivedMessages   DirectMessage[] @relation("ReceivedMessages") // A user can receive many direct messages
+  userDMReads        UserDMRead[]    @relation("UserRead")         // Tracks last DM read by this user (userId side)
+  otherUserDMReads   UserDMRead[]    @relation("OtherUserRead")    // Tracks last DM read by this user from other users (otherUserId side)
+  channelMemberships ChannelMember[]                               // Memberships in channels
+  channelReadStates  UserChannelRead[]                             // Read tracking in each channel
+  messages           Message[]       @relation("AuthorMessages")   // Messages authored by this user (channel messages)
+  mentionedIn        Message[]       @relation("MentionedUser")    // Mentions of this user in messages
+
+  @@map("Users") // Maps to the table Users
+}
+
+model DirectMessage {
+  id         String   @id @default(uuid())                // Primary key, UUID
+  senderId   String   @map("sender_id")                   // FK to sender user ID
+  receiverId String   @map("receiver_id")                 // FK to receiver user ID
+  content    String                                       // Message content
+  createdAt  DateTime @default(now()) @map("created_at")  // Timestamp
+
+  sender      User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)       // DM sender (cascades on user deletion)
+  receiver    User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade) // DM receiver (cascades on user deletion)
+  readByUsers UserDMRead[] @relation("LastReadDM")                                                                  // Tracks users that have read this direct message
+
+  @@index([senderId])     // Index for efficient sender queries
+  @@index([receiverId])   // Index for efficient receiver queries
+  @@index([createdAt])    // Index for efficient chronological ordering
+  @@map("DirectMessages") // Maps to the table DirectMessages
+}
+
+model UserDMRead {
+  id           String   @id @default(uuid())            // Primary key, UUID
+  userId       String   @map("user_id")                 // FK to the user who read the messages
+  otherUserId  String   @map("other_user_id")           // FK to the conversation partner (sender/receiver of DMs)
+  lastReadDMId String   @map("last_read_dm_id")         // FK to the last read DM in this conversation
+  readAt       DateTime @default(now()) @map("read_at") // Timestamp of when the read occurred
+
+  user       User          @relation("UserRead", fields: [userId], references: [id], onDelete: Cascade)            // The reader (cascades on user deletion)
+  otherUser  User          @relation("OtherUserRead", fields: [otherUserId], references: [id], onDelete: Cascade)  // The DM partner (cascades on user deletion)
+  lastReadDM DirectMessage @relation("LastReadDM", fields: [lastReadDMId], references: [id], onDelete: Cascade)    // The last message read (cascades on message deletion)
+
+  @@unique([userId, otherUserId]) // Ensures unique read state per user and conversation partner
+  @@map("UserDMRead")             // Maps to the table UserDMRead
+}
+
+model Channel {
+  id   String  @id @default(uuid()) // Primary key, UUID
+  name String? @db.VarChar(100)     // Optional channel name, 100 characters max
+
+  members   ChannelMember[]   // List of members in the channel
+  messages  Message[]         // Messages posted in the channel
+  readState UserChannelRead[] // Per-user last read state for this channel
+
+  @@map("Channels") // Maps to the table Channels
+}
+
+model ChannelMember {
+  id        String @id @default(uuid()) // Primary key, UUID
+  userId    String @map("user_id")      // FK to User
+  channelId String @map("channel_id")   // FK to Channel
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)     // Member user (cascades on user deletion)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)  // Joined channel (cascades on channel deletion)
+
+  @@unique([userId, channelId]) // Ensures unique membership per user and channel
+  @@map("ChannelMembers")       // Maps to the table ChannelMembers
+}
+
+model UserChannelRead {
+  id                String   @id @default(uuid())             // Primary key, UUID
+  userId            String   @map("user_id")                  // FK to User
+  channelId         String   @map("channel_id")               // FK to Channel
+  lastReadMessageId String   @map("last_read_message_id")     // FK to the last read Message
+  readAt            DateTime @default(now()) @map("read_at")  // Timestamp of when the read occurred
+
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)            // Reader (cascades on user deletion)
+  channel         Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)         // Channel (cascades on channel deletion)
+  lastReadMessage Message @relation(fields: [lastReadMessageId], references: [id], onDelete: Cascade) // Last read message (cascades on message deletion)
+
+  @@unique([userId, channelId]) // Ensures unique read state per user and channel
+  @@map("UserChannelRead")      // Maps to the table UserChannelRead
+}
+
+model Message {
+  id              String   @id @default(uuid())               // Primary key, UUID
+  userId          String   @map("user_id")                    // FK to message author
+  channelId       String   @map("channel_id")                 // FK to channel where message was posted
+  mentionedUserId String?  @map("mentioned_user_id")          // Optional FK to mentioned user
+  content         String                                      // Message body content
+  createdAt       DateTime @default(now()) @map("created_at") // Timestamp of message creation
+
+  user          User                @relation("AuthorMessages", fields: [userId], references: [id], onDelete: Cascade)          // Message author (cascades on user deletion)
+  channel       Channel             @relation(fields: [channelId], references: [id], onDelete: Cascade)                         // Channel where posted (cascades on channel deletion)
+  mentionedUser User?               @relation("MentionedUser", fields: [mentionedUserId], references: [id], onDelete: SetNull)  // Optional mentioned user (sets null on user deletion)
+  readStates    UserChannelRead[]                                                                                               // Messages can be "last read" for multiple users
+
+  @@index([channelId]) // Index for efficient channel message queries
+  @@index([userId])    // Index for efficient user message queries
+  @@index([createdAt]) // Index for efficient chronological ordering
+  @@map("Messages")    // Maps to the table Messages
 }

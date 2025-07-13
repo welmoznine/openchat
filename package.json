@@ -16,6 +16,7 @@
     "test": "npm run test:client && npm run test:server",
     "test:client": "npm run test --workspace=client -- --run",
     "test:server": "npm run test --workspace=server -- --run",
+    "test:schema": "npm run test:schema --workspace=server",
     "test:coverage": "npm run test:coverage:client && npm run test:coverage:server",
     "test:coverage:client": "npm run test:coverage --workspace=client",
     "test:coverage:server": "npm run test:coverage --workspace=server",
