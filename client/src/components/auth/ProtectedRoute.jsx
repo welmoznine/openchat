@@ -2,6 +2,28 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { UserContext } from '../../contexts/UserContext';
 
+/**
+ * ProtectedRoute is a wrapper component that guards its children by verifying user authentication.
+ *
+ * Functionality:
+ * - On mount, it checks for a JWT token in localStorage.
+ * - If no token is found, it redirects to the login page.
+ * - If a token exists, it makes a request to `/api/auth/me` to validate the token and fetch user info from the server.
+ * - If the token is valid, it provides the user object via React context (`UserContext`) to all child components.
+ * - If the token is invalid or expired, it clears the token, redirects to login, and does not render the protected content.
+ *
+ * Returns:
+ * - null while loading (optional: can be replaced with a loading spinner)
+ * - `<Navigate to="/login" />` if user is not authenticated
+ * - `<UserContext.Provider value={user}>{children}</UserContext.Provider>` if authenticated
+ *
+ * Usage:
+ * Wrap routes or components you want to protect like so:
+ * 
+ * <ProtectedRoute>
+ *   <Dashboard />
+ * </ProtectedRoute>
+ */
 const ProtectedRoute = ({ children }) => {
 
     const [user, setUser] = useState(null);
