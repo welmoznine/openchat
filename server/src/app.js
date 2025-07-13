@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
 import authRoutes from './routes/auth.js';
@@ -42,7 +43,7 @@ export const createApp = () => {
 
 // Socket.io connection handler
 export const handleSocketConnection = (socket) => {
-  console.log('User connected:', socket.id)
+    console.log('User connected:', socket.id)
   
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id)

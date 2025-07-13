@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+
 import { Router } from 'express';
 import { Prisma, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';

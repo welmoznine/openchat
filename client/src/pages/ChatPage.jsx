@@ -1,9 +1,13 @@
-import React from 'react'
+import { useContext } from 'react';
+import { UserContext } from "../contexts/UserContext"
 
 function ChatPage() {
+
+  const user = useContext(UserContext);
+
   return (
     <div className="chat-page">
-      <h2>Welcome to the Chat Room</h2>
+      <h2>Welcome to the Chat Room {user?.username}</h2>
 
       <div className="chat-messages">
         {/* Chat messages will go here */}
