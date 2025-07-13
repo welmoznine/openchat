@@ -1,9 +1,11 @@
 import { useContext } from 'react';
-import { UserContext } from "../contexts/UserContext"
+import { UserContext } from '../contexts/UserContext';
+import { useLogout } from '../hooks/auth/useLogout';
 
 function ChatPage() {
 
   const user = useContext(UserContext);
+  const logout = useLogout();
 
   return (
     <div className="chat-page">
@@ -17,6 +19,7 @@ function ChatPage() {
         <input type="text" placeholder="Type your message..." />
         <button type="submit">Send</button>
       </form>
+      <button onClick= {logout}>Logout</button>
     </div>
   )
 }
