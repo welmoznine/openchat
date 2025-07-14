@@ -7,7 +7,7 @@ const router = Router();
 const prisma = new PrismaClient();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'J@pZr7!b9Xh3uV$e2TqWlM8nDf#A1KcY';
-const JWT_EXPIRES_IN = '1h';
+const JWT_EXPIRES_IN = '24h';
 
 router.post('/register', async (req, res) => {
     
@@ -19,12 +19,18 @@ router.post('/register', async (req, res) => {
 
     try {
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email },
+        // Checking for unique username and email
+        const existingUser = await prisma.user.findFirst({
+            where: { 
+                OR: [
+                    { email },
+                    { username }
+                ]
+            }
         });
 
         if (existingUser) {
-            return res.status(409).json({ error: 'User with this email already exists.'});
+            return res.status(409).json({ error: 'User with this email or username already exists.'});
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -37,8 +43,11 @@ router.post('/register', async (req, res) => {
             }
         });
 
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+
         res.status(201).json({
             message: 'User registered successfully',
+            token,
             user: {
                 id: user.id,
                 email: user.email,
@@ -51,7 +60,6 @@ router.post('/register', async (req, res) => {
         res.status(500).json({ error: 'Internal server error.' })
     }
 
-    res.status(201).json({ message: 'TODO: Implement Registration Endpoint'})
 });
 
 router.post('/login', async (req, res) => {
@@ -79,9 +87,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password.'});
         }
 
-        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
-            expiresIn: JWT_EXPIRES_IN,
-        });
+        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         res.status(200).json({
             message: 'Login successful.',
@@ -90,7 +96,7 @@ router.post('/login', async (req, res) => {
         });
 
     } catch(error) {
-        console.log('Login Error:', error);
+        console.error('Login Error:', error);
         res.status(500).json({ message: 'Server error'});
     }
 
