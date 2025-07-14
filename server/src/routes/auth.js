@@ -10,8 +10,47 @@ const JWT_SECRET = process.env.JWT_SECRET || 'J@pZr7!b9Xh3uV$e2TqWlM8nDf#A1KcY';
 const JWT_EXPIRES_IN = '1h';
 
 router.post('/register', async (req, res) => {
-    // TODO: Implement registration logic
-    console.log('Registration Endpoint');
+    
+    const { email, username, password } = req.body;
+    
+    if (!email || !username || !password ) {
+        return res.status(400).json({ error: 'Email, username, and password are required.'});
+    }
+
+    try {
+
+        const existingUser = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (existingUser) {
+            return res.status(409).json({ error: 'User with this email already exists.'});
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                email,
+                username,
+                passwordHash: hashedPassword,
+            }
+        });
+
+        res.status(201).json({
+            message: 'User registered successfully',
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username
+            }
+        });
+
+    } catch (error) {
+        console.error('Registration Error: ', error);
+        res.status(500).json({ error: 'Internal server error.' })
+    }
+
     res.status(201).json({ message: 'TODO: Implement Registration Endpoint'})
 });
 
