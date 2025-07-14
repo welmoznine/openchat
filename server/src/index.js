@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { createServer } from 'http'
 import { Server as SocketServer } from 'socket.io'
 import { createApp, handleSocketConnection } from './app.js'

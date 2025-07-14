@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
 import authRoutes from './routes/auth.js';
