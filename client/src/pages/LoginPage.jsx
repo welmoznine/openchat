@@ -2,20 +2,48 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { isAuthenticated } from '../utils/auth';
 
+/**
+ * LoginPage component allows users to sign in with their email and password.
+ *
+ * On mount, it checks if the user is already authenticated by verifying
+ * the stored token via the `isAuthenticated` utility function.
+ * If authenticated, it automatically redirects the user to the main page (`/`).
+ * Otherwise, it renders the login form.
+ *
+ * Handles user login by sending credentials to the `/api/auth/login` endpoint.
+ * On successful login, saves the received token in localStorage and redirects to `/`.
+ *
+ * Displays status messages for login success, failure, and errors.
+ *
+ * @component
+ * @returns {JSX.Element} The login form UI or a blank div while loading auth status.
+ */
 const LoginPage = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-
-  // TODO: Need to add token validity check
-  // TODO: Need to redirect from login page if user already logged in
 
   useEffect(() => {
     document.title = 'Welcome to OpenChat';
-  }, []);
+
+    // Checking if user is authenticated already, redirect if so
+    async function checkAuth() {
+      const isAuth = await isAuthenticated();
+      if(isAuth) {
+        navigate('/');
+      } else {
+        setLoading(false);
+      }
+    }
+    
+    checkAuth();
+
+  }, [navigate]);
 
   const handleLogin = async(e) => {
     e.preventDefault();
@@ -45,6 +73,10 @@ const LoginPage = () => {
       setMessage('An error occurred');
     }
 
+  }
+
+  if (loading) {
+    return <div></div>
   }
 
   return (
