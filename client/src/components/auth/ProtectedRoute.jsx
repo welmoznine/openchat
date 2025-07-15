@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { UserContext } from '../../contexts/UserContext';
+import { useEffect, useState } from 'react'
+import { Navigate } from 'react-router-dom'
+import { UserContext } from '../../contexts/UserContext'
 
 /**
  * ProtectedRoute is a wrapper component that guards its children by verifying user authentication.
@@ -19,50 +19,49 @@ import { UserContext } from '../../contexts/UserContext';
  *
  * Usage:
  * Wrap routes or components you want to protect like so:
- * 
+ *
  * <ProtectedRoute>
  *   <Dashboard />
  * </ProtectedRoute>
  */
 const ProtectedRoute = ({ children }) => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
 
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const token = localStorage.getItem('token')
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false)
+      return
+    }
 
-        if (!token) {
-            setLoading(false);
-            return;
-        }
+    fetch('http://localhost:3000/api/auth/me', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('Invalid or expired token')
+        return res.json()
+      })
+      .then(userData => setUser(userData))
+      .catch(() => {
+        localStorage.removeItem('token')
+        setUser(null)
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
-        fetch('http://localhost:3000/api/auth/me', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`,
-        },
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Invalid or expired token');
-            return res.json();
-        })
-        .then(userData => setUser(userData))
-        .catch(() => {
-            localStorage.removeItem('token');
-            setUser(null);
-        })
-        .finally(() => setLoading(false));
-  }, []);
+  if (loading) return null
+  if (!user) return <Navigate to='/login' replace />
 
-    if (loading) return null;
-    if (!user) return <Navigate to="/login" replace />;
+  return (
+    <UserContext.Provider value={user}>
+      {children}
+    </UserContext.Provider>
+  )
+}
 
-    return (
-        <UserContext.Provider value = {user}>
-            {children}
-        </UserContext.Provider>
-    );
-};
-
-export default ProtectedRoute;
+export default ProtectedRoute
