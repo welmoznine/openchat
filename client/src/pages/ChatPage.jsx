@@ -33,9 +33,7 @@ function ChatPage() {
       setInput('')
     }
   }
-
-function ChatPage() {
-
+  
   return (
     <div className="chat-page">
       <h2>Welcome to the Chat Room {user?.username}</h2>
