@@ -85,6 +85,7 @@ const RegistrationPage = () => {
                   placeholder="Enter your password (6+ characters)" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  minLength={6}
                   required
                   />
               </div>
@@ -95,6 +96,7 @@ const RegistrationPage = () => {
                   className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none md:text-sm bg-slate-700 border-slate-600 text-white placeholder-gray-500 placeholder:text-xs"
                   placeholder="Re-enter your password" 
                   value={confirmPassword}
+                  minLength={6}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   />
