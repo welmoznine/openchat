@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const LoginPage = () => {
 
@@ -80,6 +81,9 @@ const LoginPage = () => {
                 Sign In
               </button>
             </form>
+            <div className="space-y-2 mb-4 text-center text-slate-400 text-sm">
+              <span>Don't have an account? <Link className="font-medium text-blue-400 hover:text-blue-300 underline" to="/register">Sign Up</Link></span>
+            </div>
             <div className="space-y-2 mb-4 text-center">
               {message && <p>{message}</p>}
             </div>

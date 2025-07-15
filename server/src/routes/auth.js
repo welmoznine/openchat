@@ -30,7 +30,7 @@ router.post('/register', async (req, res) => {
         });
 
         if (existingUser) {
-            return res.status(409).json({ error: 'User with this email or username already exists.'});
+            return res.status(409).json({ message: 'User with this email or username already exists.'});
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -87,7 +87,7 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid email or password.'});
         }
 
-        const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
         res.status(200).json({
             message: 'Login successful.',
@@ -121,10 +121,10 @@ router.post('/me', async (req,res) => {
     try {
 
         const decoded = jwt.verify(token, JWT_SECRET);
-        const userId = decoded.userId;
 
+        console.log(decoded);
         const user = await prisma.user.findUnique({
-            where: { id: userId },
+            where: { id: decoded.id },
             select: {
                 id: true,
                 username: true,
