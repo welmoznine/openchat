@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const LoginPage = () => {
@@ -11,6 +12,10 @@ const LoginPage = () => {
 
   // TODO: Need to add token validity check
   // TODO: Need to redirect from login page if user already logged in
+
+  useEffect(() => {
+    document.title = 'Welcome to OpenChat';
+  }, []);
 
   const handleLogin = async(e) => {
     e.preventDefault();
@@ -61,6 +66,7 @@ const LoginPage = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete='off'
                 />
               </div>
               <div className="space-y-2">
@@ -84,7 +90,7 @@ const LoginPage = () => {
             <div className="space-y-2 mb-4 text-center text-slate-400 text-sm">
               <span>Don't have an account? <Link className="font-medium text-blue-400 hover:text-blue-300 underline" to="/register">Sign Up</Link></span>
             </div>
-            <div className="space-y-2 mb-4 text-center">
+            <div className="space-y-2 mb-4 text-center text-sm text-rose-400">
               {message && <p>{message}</p>}
             </div>
           </div>
