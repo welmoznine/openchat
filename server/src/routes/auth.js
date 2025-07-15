@@ -143,7 +143,6 @@ router.post('/me', async (req,res) => {
         console.warn('Token verification failed:', error.message);
         return res.status(401).json({ message: 'Invalid or expired token' });
     }
-
 });
 
 export default router;

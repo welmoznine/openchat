@@ -1,27 +1,12 @@
 // prisma-schema.test.js
-import { PrismaClient } from "@prisma/client";
-import { beforeEach, afterEach, describe, it, expect } from "vitest";
+import { beforeEach, describe, it, expect } from "vitest";
+import { getTestDb, clearDatabase, createTestUsers, createTestChannel, createTestChannels } from "../test/database.js";
 
-const prisma = new PrismaClient();
+const prisma = getTestDb();
 
 describe("Prisma Schema Tests", () => {
-  // Helper function to clean up database
-  const cleanupDatabase = async () => {
-    await prisma.userDMRead.deleteMany();
-    await prisma.userChannelRead.deleteMany();
-    await prisma.message.deleteMany();
-    await prisma.directMessage.deleteMany();
-    await prisma.channelMember.deleteMany();
-    await prisma.channel.deleteMany();
-    await prisma.user.deleteMany();
-  };
-
   beforeEach(async () => {
-    await cleanupDatabase();
-  });
-
-  afterEach(async () => {
-    await cleanupDatabase();
+    await clearDatabase();
   });
 
   // ------ USER MODEL TESTS -----
@@ -248,29 +233,8 @@ describe("Prisma Schema Tests", () => {
 
     // Create two users and two channels for membership tests
     beforeEach(async () => {
-      USER_1 = await prisma.user.create({
-        data: {
-          username: "member1",
-          email: "member1@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      USER_2 = await prisma.user.create({
-        data: {
-          username: "member2",
-          email: "member2@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      CHANNEL_1 = await prisma.channel.create({
-        data: { name: "Channel 1" },
-      });
-
-      CHANNEL_2 = await prisma.channel.create({
-        data: { name: "Channel 2" },
-      });
+      [USER_1, USER_2] = await createTestUsers(["member1", "member2"]);
+      [CHANNEL_1, CHANNEL_2] = await createTestChannels(["Channel 1", "Channel 2"]);
     });
 
     // 12. Test creating a channel membership between a user and a channel
@@ -412,25 +376,8 @@ describe("Prisma Schema Tests", () => {
 
     // Create two users and one channel for message tests
     beforeEach(async () => {
-      USER_1 = await prisma.user.create({
-        data: {
-          username: "msguser1",
-          email: "msguser1@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      USER_2 = await prisma.user.create({
-        data: {
-          username: "msguser2",
-          email: "msguser2@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      CHANNEL_1 = await prisma.channel.create({
-        data: { name: "Message Channel" },
-      });
+      [USER_1, USER_2] = await createTestUsers(["msguser1", "msguser2"]);
+      CHANNEL_1 = await createTestChannel("Message Channel");
     });
 
     // 18. Test message creation without a mention
@@ -574,21 +521,7 @@ describe("Prisma Schema Tests", () => {
     let SENDER_USER, RECEIVER_USER;
 
     beforeEach(async () => {
-      SENDER_USER = await prisma.user.create({
-        data: {
-          username: "sender",
-          email: "sender@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      RECEIVER_USER = await prisma.user.create({
-        data: {
-          username: "receiver",
-          email: "receiver@example.com",
-          passwordHash: "hash123",
-        },
-      });
+      [SENDER_USER, RECEIVER_USER] = await createTestUsers(["sender", "receiver"]);
     });
 
     // 24. Test creation of a direct message between two users
@@ -692,26 +625,9 @@ describe("Prisma Schema Tests", () => {
 
     // Create two users, a channel, and a message before each test
     beforeEach(async () => {
-      USER_1 = await prisma.user.create({
-        data: {
-          username: "readuser1",
-          email: "readuser1@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      USER_2 = await prisma.user.create({
-        data: {
-          username: "readuser2",
-          email: "readuser2@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      CHANNEL_1 = await prisma.channel.create({
-        data: { name: "Read Test Channel" },
-      });
-
+      [USER_1, USER_2] = await createTestUsers(["readuser1", "readuser2"]);
+      CHANNEL_1 = await createTestChannel("Read Test Channel");
+      
       MESSAGE_1 = await prisma.message.create({
         data: {
           userId: USER_1.id,
@@ -876,22 +792,8 @@ describe("Prisma Schema Tests", () => {
 
     // Create two users and a direct message between them before each test
     beforeEach(async () => {
-      USER_1 = await prisma.user.create({
-        data: {
-          username: "dmuser1",
-          email: "dmuser1@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      USER_2 = await prisma.user.create({
-        data: {
-          username: "dmuser2",
-          email: "dmuser2@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
+      [USER_1, USER_2] = await createTestUsers(["dmuser1", "dmuser2"]);
+      
       DIRECT_MESSAGE = await prisma.directMessage.create({
         data: {
           senderId: USER_1.id,
@@ -1042,29 +944,8 @@ describe("Prisma Schema Tests", () => {
     let USER_1, USER_2, CHANNEL_1, CHANNEL_2;
 
     beforeEach(async () => {
-      USER_1 = await prisma.user.create({
-        data: {
-          username: "complexuser1",
-          email: "complex1@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      USER_2 = await prisma.user.create({
-        data: {
-          username: "complexuser2",
-          email: "complex2@example.com",
-          passwordHash: "hash123",
-        },
-      });
-
-      CHANNEL_1 = await prisma.channel.create({
-        data: { name: "Complex Channel 1" },
-      });
-
-      CHANNEL_2 = await prisma.channel.create({
-        data: { name: "Complex Channel 2" },
-      });
+      [USER_1, USER_2] = await createTestUsers(["complexuser1", "complexuser2"]);
+      [CHANNEL_1, CHANNEL_2] = await createTestChannels(["Complex Channel 1", "Complex Channel 2"]);
     });
 
     // 40. Test complex nested queries involving users, their channel memberships, messages (including mentions), and read states to verify correct data retrieval with deep relational includes.
@@ -1501,12 +1382,9 @@ describe("Prisma Schema Tests", () => {
   // ------ PERFORMANCE AND STRESS TESTS -----
   describe("Performance and Stress Tests", () => {
     beforeEach(async () => {
-      await cleanupDatabase();
+      await clearDatabase();
     });
 
-    afterEach(async () => {
-      await cleanupDatabase();
-    });
 
     // 45. Performance test for bulk user creation, ensuring that creating 100 users completes efficiently within a time threshold and that all users are correctly inserted.
     it("should handle bulk user creation efficiently", async () => {
