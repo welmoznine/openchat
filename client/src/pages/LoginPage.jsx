@@ -50,10 +50,10 @@ const LoginPage = () => {
   return (
     <div className="w-screen h-screen bg-slate-900 text-white">
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="flex flex-col gap-6 rounded-xl border w-full max-w-md bg-slate-800 border-slate-700">
+        <div className="flex flex-col gap-6 rounded-xl border w-full max-w-md bg-slate-800 border-slate-700 mb-4">
           <div className="grid px-6 pt-6 text-center">
             <h4 className="text-2xl text-white">Welcome to OpenChat</h4>
-            <p className="text-gray-400 text-sm">Sign in to your account to start chatting</p>
+            <p className="text-gray-400 text-sm my-1">Sign in to your account to start chatting</p>
           </div>
           <div className="px-6">
             <form onSubmit={handleLogin} className="space-y-4">
@@ -61,7 +61,7 @@ const LoginPage = () => {
                 <label className="flex font-medium select-none my-1 text-sm" htmlFor="email">Email Address</label>
                 <input 
                   type="email" 
-                  className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none md:text-sm bg-slate-700 border-slate-600 text-white placeholder-gray-400"
+                  className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none md:text-sm bg-slate-700 border-slate-600 text-white placeholder-gray-500 placeholder:text-xs"
                   placeholder="example@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -73,7 +73,7 @@ const LoginPage = () => {
                 <label className="flex font-medium select-none my-1 text-sm" htmlFor="password">Password</label>
                 <input 
                   type="password" 
-                  className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none md:text-sm bg-slate-700 border-slate-600 text-white placeholder-gray-400"
+                  className="flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base outline-none md:text-sm bg-slate-700 border-slate-600 text-white placeholder-gray-500 placeholder:text-xs"
                   placeholder="Enter your password" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
