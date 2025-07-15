@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 /**
  * Custom React hook to fetch and return the currently authenticated user's data.
  *

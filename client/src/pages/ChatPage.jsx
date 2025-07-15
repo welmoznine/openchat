@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
+import { useContext } from 'react';
+import { UserContext } from '../contexts/UserContext';
+import { useLogout } from '../hooks/auth/useLogout';
 
 function ChatPage() {
+
+  const user = useContext(UserContext);
+  const logout = useLogout();
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const socketRef = useRef(null)
@@ -28,9 +34,11 @@ function ChatPage() {
     }
   }
 
+function ChatPage() {
+
   return (
     <div className="chat-page">
-      <h2>Welcome to the Chat Room</h2>
+      <h2>Welcome to the Chat Room {user?.username}</h2>
 
       <div className="chat-messages">
         <ul>
@@ -48,6 +56,7 @@ function ChatPage() {
         />
         <button type="submit">Send</button>
       </form>
+      <button onClick= {logout}>Logout</button>
     </div>
   )
 }
