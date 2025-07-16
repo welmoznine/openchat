@@ -2,17 +2,16 @@ import { PrismaClient } from '@prisma/client'
 
 let prisma
 
-export function getTestDb() {
+export function getTestDb () {
   if (!prisma) {
     prisma = new PrismaClient()
   }
   return prisma
 }
 
-
-export async function clearDatabase() {
+export async function clearDatabase () {
   const db = getTestDb()
-  
+
   // Clear tables in correct order to handle foreign key constraints
   // Delete child tables first, then parent tables
   await db.userDMRead.deleteMany()
@@ -24,7 +23,7 @@ export async function clearDatabase() {
   await db.user.deleteMany()
 }
 
-export async function createTestUser(username, email, options = {}) {
+export async function createTestUser (username, email, options = {}) {
   const db = getTestDb()
   return await db.user.create({
     data: {
@@ -36,7 +35,7 @@ export async function createTestUser(username, email, options = {}) {
   })
 }
 
-export async function createTestUsers(usernames) {
+export async function createTestUsers (usernames) {
   const db = getTestDb()
   const users = []
   for (const username of usernames) {
@@ -52,14 +51,14 @@ export async function createTestUsers(usernames) {
   return users
 }
 
-export async function createTestChannel(name) {
+export async function createTestChannel (name) {
   const db = getTestDb()
   return await db.channel.create({
     data: { name }
   })
 }
 
-export async function createTestChannels(names) {
+export async function createTestChannels (names) {
   const db = getTestDb()
   const channels = []
   for (const name of names) {
@@ -71,8 +70,7 @@ export async function createTestChannels(names) {
   return channels
 }
 
-
-export async function disconnectTestDb() {
+export async function disconnectTestDb () {
   if (prisma) {
     await prisma.$disconnect()
     prisma = null

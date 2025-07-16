@@ -60,7 +60,7 @@ describe('Socket.io Handler', () => {
       on: vi.fn(),
       emit: vi.fn()
     }
-    
+
     expect(() => handleSocketConnection(mockSocket)).not.toThrow()
     expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function))
   })
