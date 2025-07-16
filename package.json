@@ -29,7 +29,11 @@
     "db:migrate": "npm run db:migrate --workspace=server",
     "db:reset": "npm run db:reset --workspace=server",
     "db:seed": "npm run db:seed --workspace=server",
-    "db:ui": "npm run db:ui --workspace=server"
+    "db:ui": "npm run db:ui --workspace=server",
+    "db:test:setup": "npm run db:test:setup --workspace=server",
+    "db:test:migrate": "npm run db:test:migrate --workspace=server",
+    "db:test:reset": "npm run db:test:reset --workspace=server",
+    "db:test:seed": "npm run db:test:seed --workspace=server"
   },
   "devDependencies": {
     "concurrently": "^9.2.0"

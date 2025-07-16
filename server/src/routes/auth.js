@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import createDebug from 'debug';
+
+const debug = createDebug('openchat:auth');
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -10,7 +13,6 @@ const JWT_SECRET = process.env.JWT_SECRET || 'J@pZr7!b9Xh3uV$e2TqWlM8nDf#A1KcY';
 const JWT_EXPIRES_IN = '24h';
 
 router.post('/register', async (req, res) => {
-    
     const { email, username, password } = req.body;
     
     if (!email || !username || !password ) {
@@ -59,7 +61,6 @@ router.post('/register', async (req, res) => {
         console.error('Registration Error: ', error);
         res.status(500).json({ error: 'Internal server error.' })
     }
-
 });
 
 router.post('/login', async (req, res) => {
@@ -96,7 +97,7 @@ router.post('/login', async (req, res) => {
         });
 
     } catch(error) {
-        console.error('Login Error:', error);
+        debug('Login Error:', error);
         res.status(500).json({ message: 'Server error'});
     }
 
@@ -104,7 +105,7 @@ router.post('/login', async (req, res) => {
 
 router.post('/logout', async (req, res) => {
     // TODO: Implement logout logic
-    console.log('Logout Endpoint');
+    debug('Logout endpoint called');
     res.status(200).json({ message: 'TODO: Implement Logout Endpoint'})
 });
 
@@ -132,13 +133,16 @@ router.post('/me', async (req,res) => {
             }
         });
 
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
         res.json(user);
 
     } catch (error) {
-        console.error(error);
+        console.warn('Token verification failed:', error.message);
         return res.status(401).json({ message: 'Invalid or expired token' });
     }
-
 });
 
 export default router;
