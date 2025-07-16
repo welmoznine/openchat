@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { isAuthenticated } from '../utils/auth';
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+
+import { isAuthenticated } from '../utils/auth'
 
 /**
  * RegistrationPage component allows users to create a new account by
@@ -24,34 +23,32 @@ import { isAuthenticated } from '../utils/auth';
  * @returns {JSX.Element} The registration form UI or a blank div while loading auth status.
  */
 const RegistrationPage = () => {
-
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    document.title = 'Welcome to OpenChat';
+    document.title = 'Welcome to OpenChat'
 
     // Checking if user is authenticated already, redirect if so
-    async function checkAuth() {
-      const isAuth = await isAuthenticated();
-      if(isAuth) {
-        navigate('/');
+    async function checkAuth () {
+      const isAuth = await isAuthenticated()
+      if (isAuth) {
+        navigate('/')
       } else {
-        setLoading(false);
+        setLoading(false)
       }
     }
-    
-    checkAuth();
 
-  }, [navigate]);
+    checkAuth()
+  }, [navigate])
 
-  const handleRegistration= async(e) => {
-    e.preventDefault();
+  const handleRegistration = async (e) => {
+    e.preventDefault()
 
     try {
       if (password !== confirmPassword) {
@@ -83,7 +80,7 @@ const RegistrationPage = () => {
   }
 
   if (loading) {
-    return <div></div>
+    return <div />
   }
 
   return (

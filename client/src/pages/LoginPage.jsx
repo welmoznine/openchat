@@ -1,8 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { isAuthenticated } from '../utils/auth';
+import { useState, useEffect } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+
+import { isAuthenticated } from '../utils/auth'
 
 /**
  * LoginPage component allows users to sign in with their email and password.
@@ -21,29 +20,27 @@ import { isAuthenticated } from '../utils/auth';
  * @returns {JSX.Element} The login form UI or a blank div while loading auth status.
  */
 const LoginPage = () => {
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    document.title = 'Welcome to OpenChat';
+    document.title = 'Welcome to OpenChat'
 
     // Checking if user is authenticated already, redirect if so
-    async function checkAuth() {
-      const isAuth = await isAuthenticated();
-      if(isAuth) {
-        navigate('/');
+    async function checkAuth () {
+      const isAuth = await isAuthenticated()
+      if (isAuth) {
+        navigate('/')
       } else {
-        setLoading(false);
+        setLoading(false)
       }
     }
-    
-    checkAuth();
 
-  }, [navigate]);
+    checkAuth()
+  }, [navigate])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -73,7 +70,7 @@ const LoginPage = () => {
   }
 
   if (loading) {
-    return <div></div>
+    return <div />
   }
 
   return (
