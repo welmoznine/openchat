@@ -1,13 +1,51 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 
+import { isAuthenticated } from '../utils/auth'
+
+/**
+ * RegistrationPage component allows users to create a new account by
+ * providing a username, email, password, and confirming the password.
+ *
+ * On mount, it checks if the user is already authenticated by verifying
+ * the stored token via the `isAuthenticated` utility function.
+ * If authenticated, it redirects the user to the main page (`/`).
+ * Otherwise, it renders the registration form.
+ *
+ * Handles user registration by sending the form data to the
+ * `/api/auth/register` endpoint. On successful registration,
+ * saves the received token in localStorage and redirects to `/`.
+ *
+ * Displays status messages for validation errors, registration success,
+ * failure, and other errors.
+ *
+ * @component
+ * @returns {JSX.Element} The registration form UI or a blank div while loading auth status.
+ */
 const RegistrationPage = () => {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
+  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    document.title = 'Welcome to OpenChat'
+
+    // Checking if user is authenticated already, redirect if so
+    async function checkAuth () {
+      const isAuth = await isAuthenticated()
+      if (isAuth) {
+        navigate('/')
+      } else {
+        setLoading(false)
+      }
+    }
+
+    checkAuth()
+  }, [navigate])
 
   const handleRegistration = async (e) => {
     e.preventDefault()
@@ -39,6 +77,10 @@ const RegistrationPage = () => {
       console.error(error)
       setMessage('An error occurred')
     }
+  }
+
+  if (loading) {
+    return <div />
   }
 
   return (
