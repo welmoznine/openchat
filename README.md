@@ -50,11 +50,6 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
    npm run db:setup
    ```
 
-5. Run database migrations:
-   ```bash
-   npm run db:migrate
-   ```
-
 ### Project Structure
 
 ```
