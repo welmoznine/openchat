@@ -1,29 +1,18 @@
-import js from '@eslint/js'
-import globals from 'globals'
+import neostandard from 'neostandard'
 
 export default [
+  ...neostandard(),
   {
     ignores: ['dist/', 'node_modules/']
   },
   {
     files: ['**/*.js'],
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: {
-        ...globals.node,
-        ...globals.es2020
-      },
-      parserOptions: {
-        ecmaVersion: 'latest',
-        sourceType: 'module'
-      }
-    },
     rules: {
-      ...js.configs.recommended.rules,
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
       'no-console': 'warn',
+      'no-unused-vars': 'warn',
       'prefer-const': 'error',
-      'no-var': 'error'
+      'no-process-exit': 'warn',
+      'camelcase': 'off'
     }
   }
 ] 

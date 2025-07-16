@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'
 
 /**
  * useLogout is a custom React hook that provides a reusable logout function.
@@ -16,12 +16,12 @@ import { useNavigate } from 'react-router-dom';
  * logout(); // Logs the user out and redirects to login
  */
 export const useLogout = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
 
   const logout = () => {
-    localStorage.removeItem('token');
-    navigate('/login');
-  };
+    localStorage.removeItem('token')
+    navigate('/login')
+  }
 
-  return logout;
-};
+  return logout
+}
