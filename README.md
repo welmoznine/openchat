@@ -185,6 +185,21 @@ npm run lint --workspace=server
 - **Testing**: Vitest, Testing Library, Supertest, Happy DOM
 - **Development**: ESLint, npm workspaces, Docker
 
+### Debug Logging
+
+The server uses the `debug` package for development logging. Debug output is controlled via the `DEBUG` environment variable in `.env`:
+
+```bash
+# Show all openchat logs
+DEBUG=openchat:*
+
+# Show only auth module logs
+DEBUG=openchat:auth
+
+# Show multiple specific modules
+DEBUG=openchat:auth,openchat:db
+```
+
 ### Database Configuration
 
 The application uses PostgreSQL with Prisma ORM. The database configuration is managed through:
