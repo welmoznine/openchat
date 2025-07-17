@@ -8,7 +8,7 @@ export default defineConfig({
       NODE_ENV: 'test'
     },
     setupFiles: ['./src/test/setup.js'],
-    // 並列実行を制限してデータベース競合を防ぐ（完全な順次化ではない）
+    // Limit parallel execution to prevent database conflicts
     poolOptions: {
       threads: {
         maxThreads: 1,
