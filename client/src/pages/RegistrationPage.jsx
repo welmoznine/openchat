@@ -74,7 +74,7 @@ const RegistrationPage = () => {
         setMessage(data.message)
       }
     } catch (error) {
-      //console.error(error)
+      // console.error(error)
       setMessage('An error occurred')
     }
   }
