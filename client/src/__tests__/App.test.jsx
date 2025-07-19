@@ -3,14 +3,11 @@ import { render, screen } from '@testing-library/react'
 import App from '../App'
 
 describe('App', () => {
-  it('renders the index page at root path', () => {
+  it('renders the login page at root path for unauthenticated user', async () => {
     render(<App />)
-    
-    const heading = screen.getByRole('heading', { name: /welcome to openchat/i })
+
+    const heading = await screen.findByRole('heading', { name: /welcome to openchat/i })
     expect(heading).toBeInTheDocument()
-    
-    const paragraph = screen.getByText(/this is the main page!/i)
-    expect(paragraph).toBeInTheDocument()
   })
 
   it('renders without crashing', () => {
