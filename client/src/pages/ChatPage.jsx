@@ -1,19 +1,18 @@
-import React, { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useContext } from 'react'
 import { io } from 'socket.io-client'
 import { UserContext } from '../contexts/UserContext'
 import { useLogout } from '../hooks/auth/useLogout'
-import { useContext } from 'react';
 
-const socket = io('http://localhost:3000');
+const socket = io('http://localhost:3000')
 
 function ChatPage() {
-  const user = useContext(UserContext);
-  const logout = useLogout();
+  const user = useContext(UserContext)
+  const logout = useLogout()
 
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
 
-  const socketRef = useRef(socket);
+  const socketRef = useRef(socket)
 
   useEffect(() => {
 
@@ -23,7 +22,7 @@ function ChatPage() {
     })
 
     return () => {
-      socketRef.current.off('message');
+      socketRef.current.off('message')
     }
   }, [])
 
@@ -34,7 +33,7 @@ function ChatPage() {
         user: user?.username,
         text: input
       })
-      setInput('');
+      setInput('')
     }
   }
   return (
