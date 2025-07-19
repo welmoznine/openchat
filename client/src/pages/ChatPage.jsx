@@ -1,12 +1,16 @@
-import { useContext }, { useEffect, useState, useRef } from 'react'
+<<<<<<<<< Temporary merge branch 1
+import React, { useEffect, useState, useRef } from 'react'
 import { io } from 'socket.io-client'
 import { UserContext } from '../contexts/UserContext'
 import { useLogout } from '../hooks/auth/useLogout'
+import { useContext } from 'react';
+import { UserContext } from '../contexts/UserContext';
+import { useLogout } from '../hooks/auth/useLogout';
 
-function ChatPage () {
-  const user = useContext(UserContext)
-  const logout = useLogout()
+function ChatPage() {
 
+  const user = useContext(UserContext);
+  const logout = useLogout();
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const socketRef = useRef(null)
@@ -32,7 +36,6 @@ function ChatPage () {
       setInput('')
     }
   }
-
   return (
     <div className='chat-page'>
       <h2>Welcome to the Chat Room {user?.username}</h2>
