@@ -22,6 +22,7 @@ function ChatPage () {
 
     return () => {
       socketRef.current.off('message')
+      socketRef.disconnect()
     }
   }, [])
 
