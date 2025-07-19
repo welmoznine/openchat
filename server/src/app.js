@@ -9,7 +9,7 @@ export const createApp = () => {
   const prisma = new PrismaClient()
 
   app.use(cors({
-    origin:  'http://localhost:5173',
+    origin: 'http://localhost:5173',
     credentials: true
   }))
 
@@ -41,15 +41,15 @@ export const createApp = () => {
 }
 
 // Socket.io connection handler
-export const handleSocketConnection = (socket) => {
+export const handleSocketConnection = (socket, io) => {
   console.log('User connected:', socket.id)
 
   // listen for incoming messages from this socket
-  socket.on('chat message', (msg) => {
-    console.log('message: ' + msg)
-    io.emit('chat message', msg)
+  socket.on('message', (data) => {
+    console.log('message: ' + data.text)
+    io.emit('message', data)
     // broadcast message to all connected clientts
-    // socket.broadcast.emit('chat message', msg)
+    // socket.broadcast.emit('chat message', data)
   })
 
   socket.on('disconnect', () => {
