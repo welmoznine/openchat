@@ -5,7 +5,7 @@ import { useLogout } from '../hooks/auth/useLogout'
 
 const socket = io('http://localhost:3000')
 
-function ChatPage() {
+function ChatPage () {
   const user = useContext(UserContext)
   const logout = useLogout()
 
@@ -26,7 +26,7 @@ function ChatPage() {
   }, [])
 
   const handleSubmit = (e) => {
-    e.preventDefault();
+    e.preventDefault()
     if (input.trim()) {
       socketRef.current.emit('message', {
         user: user?.username,

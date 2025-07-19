@@ -48,11 +48,11 @@ export const useCurrentUser = () => {
         }
 
         const data = await res.json()
-        console.log(data)
+        //console.log(data)
         setUser(data)
       })
       .catch((error) => {
-        console.error('useCurrentUser error:', error)
+        //console.error('useCurrentUser error:', error)
         setError(error.message)
         localStorage.removeItem('token')
         navigate('/login') // Redirect back to login
