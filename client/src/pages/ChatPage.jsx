@@ -15,7 +15,6 @@ function ChatPage() {
   const socketRef = useRef(socket)
 
   useEffect(() => {
-
     // listen for incoming messages
     socketRef.current.on('message', (data) => {
       setMessages((prev) => [...prev, data])
@@ -40,7 +39,7 @@ function ChatPage() {
     <div className='chat-page'>
       <h2>Welcome to the Chat Room {user?.username}</h2>
 
-      <ul className="messages">
+      <ul className='messages'>
         {messages.map((msg, index) => (
           <li key={index}>
             <strong>{msg.user}:   </strong>
@@ -49,14 +48,14 @@ function ChatPage() {
         ))}
       </ul>
 
-      <form className="chat-input" onSubmit={handleSubmit}>
+      <form className='chat-input' onSubmit={handleSubmit}>
         <input
-          type="text"
-          placeholder="Type your message..."
+          type='text'
+          placeholder='Type your message...'
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <button type="submit">Send</button>
+        <button type='submit'>Send</button>
       </form>
       <button onClick={logout}>Logout</button>
     </div>
