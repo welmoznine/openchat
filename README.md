@@ -50,11 +50,6 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
    npm run db:setup
    ```
 
-5. Run database migrations:
-   ```bash
-   npm run db:migrate
-   ```
-
 ### Project Structure
 
 ```
@@ -122,19 +117,48 @@ npm run lint:fix
 
 #### Testing
 
-The project includes minimal unit tests for both client and server components:
+The project uses separate databases for development and testing to ensure data isolation:
+
+- **Development DB**: `openchat` (configured in `.env`)
+- **Test DB**: `openchat_test` (configured in `.env.test`)
+
+**Test Database Setup (First Time):**
+```bash
+# 1. Ensure PostgreSQL container is running
+npm run db:setup
+
+# 2. Setup test database
+cd server
+npm run db:test:migrate
+```
+
+**Test Database Management:**
+```bash
+# Setup test database environment
+npm run db:test:setup
+
+# Run migrations on test database
+npm run db:test:migrate
+
+# Reset test database
+npm run db:test:reset
+
+# Seed test database
+npm run db:test:seed
+```
+
+**Running Tests:**
+
+The project includes comprehensive tests for both client and server components:
 
 **Client Tests (React + Vitest):**
-
 - Component rendering tests
 - User interaction tests (button clicks, form interactions)
 - UI element presence validation
 
 **Server Tests (Express + Socket.io + Vitest):**
-
-- HTTP endpoint testing
+- HTTP endpoint testing with real database
 - Socket.io connection handling
-- Error handling
 
 ```bash
 # Run tests for both client and server
@@ -150,12 +174,17 @@ npm run test:server
 npm run test:watch
 
 # Run tests with coverage report
-npm run test:coverage --workspace=client
-npm run test:coverage --workspace=server
+npm run test:coverage
 
 # Run tests with UI interface (client only)
 npm run test:ui --workspace=client
 ```
+
+**Test Environment Features:**
+- Automatic test database selection (`openchat_test`)
+- Database cleanup between tests for isolation
+- Environment-specific configuration loading
+- No interference with development data
 
 #### Individual Workspace Commands
 
@@ -184,6 +213,21 @@ npm run lint --workspace=server
 - **Database**: PostgreSQL, Prisma ORM
 - **Testing**: Vitest, Testing Library, Supertest, Happy DOM
 - **Development**: ESLint, npm workspaces, Docker
+
+### Debug Logging
+
+The server uses the `debug` package for development logging. Debug output is controlled via the `DEBUG` environment variable in `.env`:
+
+```bash
+# Show all openchat logs
+DEBUG=openchat:*
+
+# Show only auth module logs
+DEBUG=openchat:auth
+
+# Show multiple specific modules
+DEBUG=openchat:auth,openchat:db
+```
 
 ### Database Configuration
 

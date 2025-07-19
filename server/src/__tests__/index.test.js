@@ -1,12 +1,18 @@
-import { describe, it, expect, beforeAll, vi } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import request from 'supertest'
 import { createApp, handleSocketConnection } from '../app.js'
+import { clearDatabase, disconnectTestDb } from '../test/database.js'
 
 describe('Express Server', () => {
   let app
 
-  beforeAll(() => {
+  beforeAll(async () => {
+    await clearDatabase()
     app = createApp()
+  })
+
+  afterAll(async () => {
+    await disconnectTestDb()
   })
 
   describe('GET /', () => {
@@ -54,7 +60,7 @@ describe('Socket.io Handler', () => {
       on: vi.fn(),
       emit: vi.fn()
     }
-    
+
     expect(() => handleSocketConnection(mockSocket)).not.toThrow()
     expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function))
   })

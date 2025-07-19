@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 /**
  * Custom React hook to fetch and return the currently authenticated user's data.
@@ -23,47 +22,45 @@ import { useNavigate } from 'react-router-dom';
  * return <p>Hello, {user.username}</p>;
  */
 export const useCurrentUser = () => {
+  const [user, setUser] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const navigate = useNavigate();
+  useEffect(() => {
+    const token = localStorage.getItem('token')
 
-    useEffect(() => {
-        const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false)
+      navigate('/login') // Redirect back to login
+      return
+    }
 
-        if (!token){
-            setLoading(false);
-            navigate('/login'); // Redirect back to login
-            return
+    fetch('http://localhost:3000/api/auth/me', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error('Invalid or expired token')
         }
 
-        fetch('http://localhost:3000/api/auth/me', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        })
-        .then(async (res) => {
+        const data = await res.json()
+        console.log(data)
+        setUser(data)
+      })
+      .catch((error) => {
+        console.error('useCurrentUser error:', error)
+        setError(error.message)
+        localStorage.removeItem('token')
+        navigate('/login') // Redirect back to login
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }, [navigate])
 
-            if(!res.ok) {
-                throw new Error('Invalid or expired token');
-            }
-
-            const data = await res.json();
-            console.log(data);
-            setUser(data);
-        })
-        .catch((error) => {
-            console.error('useCurrentUser error:', error);
-            setError(error.message);
-            localStorage.removeItem('token');
-            navigate('/login'); // Redirect back to login
-        })
-        .finally(() => {
-            setLoading(false);
-        });
-    }, [navigate]);
-
-    return { user, loading, error };
+  return { user, loading, error }
 }

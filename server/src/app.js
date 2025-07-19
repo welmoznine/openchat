@@ -1,7 +1,7 @@
 import express from 'express'
 import { PrismaClient } from '@prisma/client'
-import authRoutes from './routes/auth.js';
-import cors from 'cors';
+import authRoutes from './routes/auth.js'
+import cors from 'cors'
 
 // Create Express app factory
 export const createApp = () => {
@@ -9,12 +9,12 @@ export const createApp = () => {
   const prisma = new PrismaClient()
 
   app.use(cors({
-    origin: 'http://localhost:5173',
+    origin:  'http://localhost:5173',
     credentials: true
   }))
 
-  app.use(express.json());
-  app.use('/api/auth', authRoutes);
+  app.use(express.json())
+  app.use('/api/auth', authRoutes)
 
   // Basic Express route
   app.get('/', (req, res) => {
@@ -55,4 +55,4 @@ export const handleSocketConnection = (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id)
   })
-} 
+}

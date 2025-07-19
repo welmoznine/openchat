@@ -1,22 +1,18 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-
-import IndexPage from './pages/IndexPage';
-import LoginPage from './pages/LoginPage';
-import RegistrationPage from './pages/RegistrationPage';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+import RegistrationPage from './pages/RegistrationPage'
 import ChatPage from './pages/ChatPage'
 
-import './App.css';
+import './App.css'
 
-function App() {
-
+function App () {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<IndexPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/register" element={<RegistrationPage />} />
-        
+        <Route path='/' element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+        <Route path='/login' element={<LoginPage />} />
+        <Route path='/register' element={<RegistrationPage />} />
       </Routes>
     </Router>
   )
