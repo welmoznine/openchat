@@ -1,13 +1,43 @@
-import { useContext, useEffect, useState, useRef} from 'react'
+import { useEffect, useState, useRef, useContext } from 'react'
+import { io } from 'socket.io-client'
 import { UserContext } from '../contexts/UserContext'
 import { useLogout } from '../hooks/auth/useLogout'
 import SettingsMenu from '../components/SettingsMenu'
+
+const socket = io('http://localhost:3000')
 
 function ChatPage () {
   const [message, setMessage] = useState('');
   const [user] = useContext(UserContext);
   const logout = useLogout();
 
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+
+  const socketRef = useRef(socket)
+
+  useEffect(() => {
+    // listen for incoming messages
+    socketRef.current.on('message', (data) => {
+      setMessages((prev) => [...prev, data])
+    })
+
+    return () => {
+      socketRef.current.off('message')
+      socketRef.disconnect()
+    }
+  }, [])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (input.trim()) {
+      socketRef.current.emit('message', {
+        user: user?.username,
+        text: input
+      })
+      setInput('')
+    }
+  }
   return (
     <div className="h-screen flex bg-slate-800 text-white">
       {/* Sidebar */}
@@ -28,6 +58,7 @@ function ChatPage () {
               <SettingsMenu onLogout={logout} />
           </div>
         </div>
+
 
         {/* Channels */}
         <div className="flex-1 overflow-y-auto">

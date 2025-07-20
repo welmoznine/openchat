@@ -14,9 +14,9 @@ const io = new SocketServer(server, {
 const PORT = process.env.PORT || 3000
 
 // Socket.io connection handling
-io.on('connection', handleSocketConnection)
+io.on('connection', (socket) => handleSocketConnection(socket, io))
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`HTTP server listening on port ${PORT}`)
 })
