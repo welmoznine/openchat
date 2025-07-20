@@ -79,8 +79,9 @@ model UserDMRead {
 }
 
 model Channel {
-  id   String  @id @default(uuid()) // Primary key, UUID
-  name String? @db.VarChar(100)     // Optional channel name, 100 characters max
+  id   String  @id @default(uuid())     // Primary key, UUID
+  name String? @db.VarChar(100)         // Optional channel name, 100 characters max
+  description String? @db.VarChar(255)  // Optional channel description, 255 characters max
 
   members   ChannelMember[]   // List of members in the channel
   messages  Message[]         // Messages posted in the channel
