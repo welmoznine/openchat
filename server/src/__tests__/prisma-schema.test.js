@@ -201,7 +201,7 @@ describe('Prisma Schema Tests', () => {
         data: { name: 'Random' },
       })
 
-      const CHANNEL_2 = await prisma.channel.create({
+      await prisma.channel.create({
         data: { name: 'Work' },
       })
 
@@ -486,7 +486,7 @@ describe('Prisma Schema Tests', () => {
 
     // 23. Test ordering of messages by createdAt timestamp
     it('should order messages by creation time', async () => {
-      const MESSAGE_1 = await prisma.message.create({
+      await prisma.message.create({
         data: {
           userId: USER_1.id,
           channelId: CHANNEL_1.id,
@@ -497,7 +497,7 @@ describe('Prisma Schema Tests', () => {
       // Small delay to ensure different timestamps
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      const MESSAGE_2 = await prisma.message.create({
+      await prisma.message.create({
         data: {
           userId: USER_1.id,
           channelId: CHANNEL_1.id,
@@ -974,7 +974,7 @@ describe('Prisma Schema Tests', () => {
         },
       })
 
-      const MESSAGE_2 = await prisma.message.create({
+      await prisma.message.create({
         data: {
           userId: USER_1.id,
           channelId: CHANNEL_2.id,
@@ -1047,7 +1047,7 @@ describe('Prisma Schema Tests', () => {
     // 41. Test querying a user's entire conversation context, including sent and received direct messages, mentions in channel messages, and DM read states, ensuring all relevant relationships are loaded.
     it('should handle user conversation query (DMs and mentions)', async () => {
       // Create direct messages
-      const DM_1 = await prisma.directMessage.create({
+      await prisma.directMessage.create({
         data: {
           senderId: USER_1.id,
           receiverId: USER_2.id,
@@ -1321,7 +1321,7 @@ describe('Prisma Schema Tests', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      const MESSAGE_2 = await prisma.message.create({
+      await prisma.message.create({
         data: {
           userId: USER_1.id,
           channelId: CHANNEL_1.id,
@@ -1331,7 +1331,7 @@ describe('Prisma Schema Tests', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      const MESSAGE_3 = await prisma.message.create({
+      await prisma.message.create({
         data: {
           userId: USER_1.id,
           channelId: CHANNEL_1.id,

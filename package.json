@@ -24,7 +24,7 @@
     "test:watch:server": "npm test -- --watch --workspace=server",
     "lint": "npm run lint --workspace=client && npm run lint --workspace=server",
     "lint:fix": "npm run lint:fix --workspace=client && npm run lint:fix --workspace=server",
-    "db:setup": "docker compose up -d",
+    "db:setup": "docker compose up -d && npm run db:migrate",
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate --workspace=server",
     "db:reset": "npm run db:reset --workspace=server",
@@ -37,5 +37,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.0"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.1"
   }
 }
