@@ -1,44 +1,45 @@
-import express from 'express'
-import { PrismaClient } from '@prisma/client'
-import authRoutes from './routes/auth.js'
-import cors from 'cors'
+import express from "express";
+import { PrismaClient } from "@prisma/client";
+import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/user.js";
+import cors from "cors";
 
 // Create Express app factory
 export const createApp = () => {
-  const app = express()
-  const prisma = new PrismaClient()
+const app = express();
+const prisma = new PrismaClient();
 
-  app.use(cors({
-    origin: 'http://localhost:5173',
-    credentials: true
-  }))
+app.use(
+cors({
+origin: "http://localhost:5173",
+credentials: true,
+})
+);
 
-  app.use(express.json())
-  app.use('/api/auth', authRoutes)
+app.use(express.json());
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
 
-  // Basic Express route
-  app.get('/', (req, res) => {
-    res.json({ message: 'Server is running!' })
-  })
+// Basic Express route
+app.get("/", (req, res) => {
+res.json({ message: "Server is running!" });
+});
 
-  // Health check endpoint
-  app.get('/health', async (req, res) => {
-    try {
-      await prisma.$queryRaw`SELECT NOW()`
-      res.json({
-        status: 'healthy',
-        database: 'connected'
-      })
-    } catch (error) {
-      res.status(500).json({
-        status: 'unhealthy',
-        error: error.message
-      })
-    }
-  })
-
-  return app
+// Health check endpoint
+app.get("/health", async (req, res) => {
+try {
+await prisma.$queryRaw`SELECT NOW()`;
+res.json({ status: "healthy", database: "connected" });
+} catch (error) {
+res.status(500).json({ status: "unhealthy", error: error.message });
 }
+});
+
+return app;
+};
+
+// Store connected users
+const connectedUsers = new Map();
 
 // Socket.io connection handler
 export const handleSocketConnection = (socket, io) => {

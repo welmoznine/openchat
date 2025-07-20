@@ -60,7 +60,7 @@ function ChatPage () {
       </form>
       <button onClick={logout}>Logout</button>
     </div>
-  )
+  );
 }
 
-export default ChatPage
+export default ChatPage;
