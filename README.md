@@ -237,34 +237,6 @@ The application uses PostgreSQL with Prisma ORM. The database configuration is m
 - **server/prisma/schema.prisma**: Database schema definition
 - **server/.env**: Environment variables (copy from .env.sample)
 
-## Redis Setup and Testing
-
-To ensure Redis is running correctly and ready for development, follow these steps:
-
-### 1. Start the Redis container
-
-```bash
-docker compose up -d redis
-```
-### 2. Access the Redis command-line interface (CLI)
-```bash
-docker exec -it openchat-redis-1 redis-cli
-```
-This command opens an interactive shell inside the Redis container, allowing you to run Redis commands directly.
-### 3. Test Redis responsiveness
-Inside the Redis CLI, type:
-
-```r
-ping
-```
-You should receive the response:
-```nginx
-
-PONG
-```
-This confirms that Redis is up, running, and ready to accept commands.
-
-
 ## CI/CD
 
 This project uses GitHub Actions to run automated workflows for code quality and security.
