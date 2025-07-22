@@ -13,8 +13,10 @@ import Sidebar from '../components/chat/Sidebar'
 import ChatHeader from '../components/chat/ChatHeader'
 import MessageInput from '../components/chat/MessageInput'
 import Notification from '../components/chat/Notification'
+import SettingsMenu from '../components/SettingsMenu'
 
 function ChatPage () {
+
   // Hooks
   const user = useUser() // Get user from context
   const logout = useLogout() // Get logout function
@@ -350,6 +352,7 @@ function ChatPage () {
         onlineMembers={onlineMembers}
         onLogout={handleLogout}
         isConnected={socketConnected}
+        SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
       />
 
       <div className='flex-1 flex flex-col bg-slate-700'>

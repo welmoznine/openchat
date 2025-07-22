@@ -78,7 +78,7 @@ const LoginPage = () => {
       <div className='min-h-screen flex items-center justify-center p-4'>
         <div className='flex flex-col gap-6 rounded-xl border w-full max-w-md bg-slate-800 border-slate-700 mb-4'>
           <div className='grid px-6 pt-6 text-center'>
-            <h4 className='text-2xl text-white'>Welcome to OpenChat</h4>
+            <h1 className='text-2xl text-white'>Welcome to OpenChat</h1>
             <p className='text-gray-400 text-sm my-1'>Sign in to your account to start chatting</p>
           </div>
           <div className='px-6'>
