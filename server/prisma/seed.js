@@ -7,7 +7,7 @@ async function main() {
   // Upsert test user: create if not exists, otherwise do nothing
   await prisma.user.upsert({
     where: { email: "testuser@example.com" },
-    update: {}, 
+    update: {},
     create: {
       username: "testuser",
       email: "testuser@example.com",
@@ -53,34 +53,54 @@ async function main() {
   });
 
   // Create a channel named 'general'
-  const channel = await prisma.channel.create({
+  const generalChannel = await prisma.channel.create({
+    data: { name: "general", description: "Team-wide communication" },
+  });
+
+  // Create 'random' channel
+  const randomChannel = await prisma.channel.create({
     data: {
-      name: "general",
+      name: "random",
+      description: "Random conversations and casual chat",
     },
   });
 
-  // Add both users as members of the channel
+  // Create 'development' channel
+  const devChannel = await prisma.channel.create({
+    data: {
+      name: "development",
+      description: "Development-related discussions",
+    },
+  });
+
+  // Add users to channels based on the requirements
   await prisma.channelMember.createMany({
     data: [
-      { userId: user1.id, channelId: channel.id },
-      { userId: user2.id, channelId: channel.id },
+      // Add testuser@example.com (user1) to all three channels
+      { userId: user1.id, channelId: generalChannel.id },
+      { userId: user1.id, channelId: randomChannel.id },
+      { userId: user1.id, channelId: devChannel.id },
+
+      // Add testuser2@example.com (user2) to only general and random channels
+      { userId: user2.id, channelId: generalChannel.id },
+      { userId: user2.id, channelId: randomChannel.id },
     ],
   });
 
-  // Create a message from user1 in the channel
+  // Create a message from user1 in the general channel
   const message = await prisma.message.create({
     data: {
       userId: user1.id,
-      channelId: channel.id,
+      channelId: generalChannel.id,
       content: "Welcome to the general channel!",
     },
   });
 
-  // Mark message as last read by user2 in this channel
+  // Mark message as last read by user2 in the general channel
   await prisma.userChannelRead.create({
     data: {
       userId: user2.id,
-      channelId: channel.id,
+      channelId: generalChannel.id,
       lastReadMessageId: message.id,
     },
   });
