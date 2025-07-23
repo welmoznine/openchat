@@ -16,7 +16,6 @@ import Notification from '../components/chat/Notification'
 import SettingsMenu from '../components/SettingsMenu'
 
 function ChatPage () {
-
   // Hooks
   const user = useUser() // Get user from context
   const logout = useLogout() // Get logout function
