@@ -53,4 +53,33 @@ router.get('/channels', async (req, res) => {
   }
 })
 
+router.post('/channels', async (req, res) => {
+  try {
+    const { name, description } = req.body
+
+    // Checking for name & length <= 100
+    if (name && name.length > 100) {
+      return res.status(400).json({ error: 'Name exceeds 100 characters.' })
+    }
+
+    if (description && description.length > 255) {
+      return res.status(400).json({ error: 'Description exceeds 255 characters' })
+    }
+
+    const newChannel = await prisma.channel.create({
+
+      data: {
+        name,
+        description
+      },
+
+    })
+
+    return res.status(201).json(newChannel)
+  } catch (error) {
+    console.error('Failed to create channel: ', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 export default router
