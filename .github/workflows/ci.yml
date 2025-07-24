@@ -7,6 +7,25 @@ on:
     branches: ["**"]
 
 jobs:
+  terraform-fmt:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "latest"
+
+      - name: Terraform format check
+        run: terraform fmt -check -recursive -diff -no-color infrastructure/terraform/
+
   test:
     runs-on: ubuntu-latest
 

@@ -32,7 +32,7 @@ resource "google_project_service" "product_apis" {
 
   service            = each.value
   disable_on_destroy = false
-  
+
   depends_on = [google_project_service.meta_apis]
 }
 
@@ -62,7 +62,7 @@ resource "google_project_iam_member" "tf_sa_required_roles" {
 resource "google_compute_network" "main" {
   name                    = "${var.app_name}-vpc"
   auto_create_subnetworks = false
-  
+
   depends_on = [
     google_project_service.product_apis,
     google_project_iam_member.tf_sa_required_roles
@@ -275,10 +275,10 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 
 #     spec {
 #       service_account_name = google_service_account.frontend.email
-      
+
 #       containers {
 #         image = var.frontend_image != "" ? var.frontend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
-        
+
 #         ports {
 #           container_port = 80
 #         }
@@ -324,10 +324,10 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 
 #     spec {
 #       service_account_name = google_service_account.backend.email
-      
+
 #       containers {
 #         image = var.backend_image != "" ? var.backend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
-        
+
 #         ports {
 #           container_port = 3000
 #         }
