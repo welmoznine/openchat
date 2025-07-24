@@ -66,7 +66,7 @@ router.get('/channels', async (req, res) => {
 
 router.post('/channels', async (req, res) => {
   try {
-    const { name, description } = req.body
+    const { name, description, isPrivate } = req.body
 
     // Checking for name & length <= 100
     if (name && name.length > 100) {
@@ -81,7 +81,8 @@ router.post('/channels', async (req, res) => {
 
       data: {
         name,
-        description
+        description,
+        isPrivate
       },
 
     })
