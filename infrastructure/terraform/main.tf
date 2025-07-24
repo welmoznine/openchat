@@ -291,7 +291,7 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 #         }
 
 #         env {
-#           name  = "REACT_APP_API_BASE_URL"
+#           name  = "VITE_API_BASE_URL"
 #           value = "https://${var.backend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
 #         }
 #       }
@@ -355,7 +355,7 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 #         }
 
 #         env {
-#           name  = "FRONTEND_URL"
+#           name  = "PUBLIC_URL"
 #           value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
 #         }
 
