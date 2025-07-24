@@ -14,12 +14,14 @@ const Sidebar = ({
   onlineMembers,
   onLogout,
   isConnected,
+  toggleSidebar
 }) => (
-  <div className='w-64 bg-slate-900 flex flex-col'>
+  <div className='h-screen w-screen bg-slate-900 md:w-64 md:flex md:flex-col'>
     <UserProfile
       user={currentUser}
       onLogout={onLogout}
       isConnected={isConnected}
+      toggleSidebar={toggleSidebar}
     />
 
     <div className='flex-1 overflow-y-auto'>
