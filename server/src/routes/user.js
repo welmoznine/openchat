@@ -37,15 +37,26 @@ router.get('/channels', async (req, res) => {
   try {
     console.log('User /channels endpoint hit, user:', req.user)
 
+    // Getting all public user channels, and also any private channels they are a member of
     const channels = await prisma.channel.findMany({
       where: {
-        members: {
-          some: { userId: req.user.id },
-        },
+        OR: [
+          { isPrivate: false }, // Public channels
+          {
+            AND: [
+              { isPrivate: true },
+              {
+                members: {
+                  some: { userId: req.user.id }, // Private channels the user is in
+                },
+              },
+            ],
+          },
+        ],
       },
     })
 
-    console.log(`Found ${channels.length} channels for user ${req.user.id}`)
+    console.log(`Found ${channels.length} accessible channels for user ${req.user.id}`)
     res.json(channels)
   } catch (error) {
     console.error('Error in /channels:', error)
