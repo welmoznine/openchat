@@ -1,0 +1,18 @@
+# OpenChat Terraform Configuration
+# Copy this file to terraform.tfvars and configure your values
+
+# GCP Configuration (use the same values from bootstrap/.env)
+project_id = "openchat-cs467-400"
+region     = "us-west1"
+
+# Application Configuration
+app_name               = "openchat"
+frontend_service_name  = "openchat-frontend"
+backend_service_name   = "openchat-backend"
+
+# Database Configuration
+db_user = "openchat_user"
+
+# Container Images (leave empty for initial deployment)
+frontend_image = ""
+backend_image  = ""

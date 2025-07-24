@@ -32,9 +32,32 @@ Sets up initial GCP resources for OpenChat infrastructure.
 ## What it creates
 
 - GCP project (from PROJECT_ID)
+- Enables meta-APIs required for Terraform provider to function:
+  - `cloudresourcemanager.googleapis.com` - Project and IAM management
+  - `serviceusage.googleapis.com` - API enablement/management
+  - `cloudbilling.googleapis.com` - Billing account management
+  - `iam.googleapis.com` - Service account and role management
+  - `storage.googleapis.com` - Core GCS service
+  - `storage-component.googleapis.com` - GCS bucket operations
+  - `storage-api.googleapis.com` - GCS API access
 - Terraform service account with required permissions
-- GCS bucket for Terraform state
-- Service account key: `../terraform-key.json`
+- GCS bucket for Terraform state with versioning enabled
+- Service account key: `../../terraform-key.json`
+
+## API Management Strategy
+
+This bootstrap follows Google Cloud best practices for API management:
+
+1. **Meta-APIs** (handled by bootstrap):
+   - Essential APIs that Terraform provider needs to operate
+   - Enabled once during initial setup
+   - Never managed by Terraform to avoid circular dependencies
+
+2. **Product APIs** (handled by Terraform):
+   - All application-specific APIs (Cloud Run, Cloud SQL, etc.)
+   - Managed declaratively in `terraform/main.tf`
+   - Provides drift detection and version control
+   - Configured with `disable_on_destroy = false` to prevent accidental disabling
 
 ## After setup
 
