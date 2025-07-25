@@ -7,7 +7,11 @@ set -euo pipefail
 
 # Load environment variables from .env file if it exists
 if [[ -f ".env" ]]; then
+    echo "Loading configuration from .env"
     source .env
+else
+    echo "Error: No .env file found. Please copy .env.example to .env and configure your values."
+    exit 1
 fi
 
 # Configuration - Load from environment variables
@@ -81,18 +85,14 @@ echo "4. Setting project as default..."
 gcloud config set project ${PROJECT_ID}
 echo "   Project set as default."
 
-# Enable required APIs
-echo "5. Enabling required APIs..."
+# Enable required meta-APIs for Terraform to function
+echo "5. Enabling meta-APIs for Terraform..."
 APIS=(
     "cloudresourcemanager.googleapis.com"
-    "compute.googleapis.com"
-    "container.googleapis.com"
-    "sqladmin.googleapis.com"
-    "servicenetworking.googleapis.com"
-    "run.googleapis.com"
-    "cloudbuild.googleapis.com"
-    "secretmanager.googleapis.com"
+    "serviceusage.googleapis.com"
+    "cloudbilling.googleapis.com"
     "iam.googleapis.com"
+    "storage.googleapis.com"
     "storage-component.googleapis.com"
     "storage-api.googleapis.com"
 )
@@ -101,7 +101,7 @@ for API in "${APIS[@]}"; do
     echo "   Enabling ${API}..."
     gcloud services enable ${API} --project=${PROJECT_ID}
 done
-echo "   All APIs enabled."
+echo "   Meta-APIs enabled. Product APIs will be managed by Terraform."
 
 # Create Terraform service account
 echo "6. Creating Terraform service account..."
@@ -157,7 +157,7 @@ echo "   Access granted."
 
 # Create service account key
 echo "10. Creating service account key..."
-KEY_FILE="../terraform-key.json"
+KEY_FILE="../../terraform-key.json"  # Project root
 if [ -f "${KEY_FILE}" ]; then
     echo "   Key file already exists. Skipping..."
 else
@@ -173,12 +173,13 @@ echo "=== Bootstrap Complete! ==="
 echo ""
 echo "Next steps:"
 echo "1. Export the service account key path:"
-echo "   export GOOGLE_APPLICATION_CREDENTIALS=\"\$(pwd)/${KEY_FILE}\""
+echo "   cd ../.."
+echo "   export GOOGLE_APPLICATION_CREDENTIALS=\"\$(pwd)/terraform-key.json\""
 echo ""
-echo "2. Create your Terraform configuration in ../terraform/"
+echo "2. Create your Terraform configuration in infrastructure/terraform/"
 echo ""
 echo "3. Configure your Terraform backend to use:"
 echo "   bucket = \"${TERRAFORM_STATE_BUCKET}\""
 echo "   prefix = \"terraform/state\""
 echo ""
-echo "Important: Keep ${KEY_FILE} secure and never commit it to version control!"
+echo "Important: Keep terraform-key.json secure and never commit it to version control!"
