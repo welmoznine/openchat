@@ -50,6 +50,7 @@ const Sidebar = ({
                 key={channel.id}
                 name={channel.name}
                 isActive={activeChannel === channel.name}
+                isPrivate={channel.isPrivate}
                 unreadCount={channel.unreadCount}
                 onClick={() => onChannelSelect(channel.name)}
               />
