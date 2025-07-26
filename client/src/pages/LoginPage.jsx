@@ -23,7 +23,6 @@ const LoginPage = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -34,8 +33,6 @@ const LoginPage = () => {
       const isAuth = await isAuthenticated()
       if (isAuth) {
         navigate('/')
-      } else {
-        setLoading(false)
       }
     }
 
@@ -67,10 +64,6 @@ const LoginPage = () => {
       console.error(error)
       setMessage('An error occurred')
     }
-  }
-
-  if (loading) {
-    return <div />
   }
 
   return (

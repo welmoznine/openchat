@@ -28,7 +28,6 @@ const RegistrationPage = () => {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [message, setMessage] = useState('')
-  const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -39,8 +38,6 @@ const RegistrationPage = () => {
       const isAuth = await isAuthenticated()
       if (isAuth) {
         navigate('/')
-      } else {
-        setLoading(false)
       }
     }
 
@@ -77,10 +74,6 @@ const RegistrationPage = () => {
       console.error(error)
       setMessage('An error occurred')
     }
-  }
-
-  if (loading) {
-    return <div />
   }
 
   return (
