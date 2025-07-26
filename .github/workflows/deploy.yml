@@ -2,7 +2,7 @@ name: Deploy to Cloud Run
 
 on:
   push:
-    branches: ["main", "feat/fix-deploy-env"]
+    branches: ["main"]
 
 env:
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
@@ -30,7 +30,9 @@ jobs:
 
       - name: Build and push client image
         run: |
-          docker build -f client/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
+          docker build -f client/Dockerfile \
+            --build-arg VITE_API_BASE_URL=https://openchat-backend-${{ vars.GCP_PROJECT_NUMBER }}.${{ env.REGION }}.run.app \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }}
 
       - name: Build and push server image

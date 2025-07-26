@@ -10,12 +10,12 @@ output "region" {
 
 output "frontend_url" {
   description = "Frontend service URL"
-  value       = google_cloud_run_service.frontend.status[0].url
+  value       = google_cloud_run_v2_service.frontend.uri
 }
 
 output "backend_url" {
   description = "Backend service URL"
-  value       = google_cloud_run_service.backend.status[0].url
+  value       = google_cloud_run_v2_service.backend.uri
 }
 
 output "database_instance_name" {

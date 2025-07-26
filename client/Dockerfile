@@ -5,6 +5,8 @@ COPY package*.json ./
 COPY client/package*.json ./client/
 RUN npm ci --include-workspace-root
 COPY . .
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run --workspace client build
 
 # --- runtime image ---
