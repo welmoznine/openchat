@@ -33,7 +33,7 @@ export function useAddChannel () {
       const data = await res.json()
       return data
     } catch (err) {
-      return null
+      setError(err.message)
     } finally {
       setLoading(false)
     }
