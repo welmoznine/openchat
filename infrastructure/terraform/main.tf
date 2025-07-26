@@ -252,15 +252,15 @@ resource "google_service_account" "backend" {
   display_name = "OpenChat Backend Service Account"
 }
 
-resource "google_project_iam_member" "backend_sql_client" {
-  project = var.project_id
-  role    = "roles/cloudsql.client"
-  member  = "serviceAccount:${google_service_account.backend.email}"
-}
+resource "google_project_iam_member" "backend_permissions" {
+  for_each = toset([
+    "roles/cloudsql.client",
+    "roles/artifactregistry.reader",
+    "roles/compute.networkUser"
+  ])
 
-resource "google_project_iam_member" "backend_artifact_reader" {
   project = var.project_id
-  role    = "roles/artifactregistry.reader"
+  role    = each.value
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
 
@@ -324,85 +324,103 @@ resource "google_cloud_run_service" "frontend" {
     latest_revision = true
   }
 
+  lifecycle {
+    ignore_changes = [
+      template[0].metadata[0].annotations["run.googleapis.com/client-name"],
+      template[0].metadata[0].annotations["run.googleapis.com/client-version"],
+      template[0].spec[0].containers[0].image,
+    ]
+  }
+
   depends_on = [
     google_project_service.product_apis,
     google_project_iam_member.tf_sa_required_roles
   ]
 }
 
-# resource "google_cloud_run_service" "backend" {
-#   name     = var.backend_service_name
-#   location = var.region
+resource "google_cloud_run_service" "backend" {
+  name     = var.backend_service_name
+  location = var.region
 
-#   template {
-#     metadata {
-#       annotations = {
-#         "autoscaling.knative.dev/maxScale" = "10"
-#         "run.googleapis.com/network-interfaces" = "[{\"network\":\"${google_compute_network.main.name}\",\"subnetwork\":\"${google_compute_subnetwork.main.name}\"}]"
-#         "run.googleapis.com/vpc-access-egress" = "all-traffic"
-#       }
-#     }
+  template {
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/maxScale"      = "10"
+        "run.googleapis.com/network-interfaces" = "[{\"network\":\"${google_compute_network.main.name}\",\"subnetwork\":\"${google_compute_subnetwork.main.name}\"}]"
+        "run.googleapis.com/vpc-access-egress"  = "all-traffic"
+      }
+    }
 
-#     spec {
-#       service_account_name = google_service_account.backend.email
+    spec {
+      service_account_name = google_service_account.backend.email
 
-#       containers {
-#         image = var.backend_image != "" ? var.backend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
+      containers {
+        image = var.backend_image != "" ? var.backend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
 
-#         ports {
-#           container_port = 3000
-#         }
+        ports {
+          container_port = 3000
+        }
 
-#         resources {
-#           limits = {
-#             cpu    = "1"
-#             memory = "1Gi"
-#           }
-#         }
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "1Gi"
+          }
+        }
 
-#         env {
-#           name  = "NODE_ENV"
-#           value = "production"
-#         }
+        dynamic "env" {
+          for_each = {
+            "DATABASE_URL" = {
+              secret = google_secret_manager_secret.database_url.secret_id
+            }
+            "JWT_SECRET" = {
+              secret = google_secret_manager_secret.jwt_secret.secret_id
+            }
+            "NODE_ENV" = {
+              value = "production"
+            }
+            "PUBLIC_URL" = {
+              value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
+            }
+          }
+          content {
+            name = env.key
 
-#         env {
-#           name = "DATABASE_URL"
-#           value_from {
-#             secret_key_ref {
-#               name = google_secret_manager_secret.database_url.secret_id
-#               key  = "latest"
-#             }
-#           }
-#         }
+            dynamic "value_from" {
+              for_each = can(env.value.secret) ? [1] : []
+              content {
+                secret_key_ref {
+                  name = env.value.secret
+                  key  = "latest"
+                }
+              }
+            }
 
-#         env {
-#           name  = "PUBLIC_URL"
-#           value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
-#         }
+            value = can(env.value.value) ? env.value.value : null
+          }
+        }
+      }
+    }
+  }
 
-#         env {
-#           name = "JWT_SECRET"
-#           value_from {
-#             secret_key_ref {
-#               name = google_secret_manager_secret.jwt_secret.secret_id
-#               key  = "latest"
-#             }
-#           }
-#         }
-#       }
-#     }
-#   }
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
 
-#   traffic {
-#     percent         = 100
-#     latest_revision = true
-#   }
+  lifecycle {
+    ignore_changes = [
+      template[0].metadata[0].annotations["run.googleapis.com/client-name"],
+      template[0].metadata[0].annotations["run.googleapis.com/client-version"],
+      template[0].spec[0].containers[0].image,
+    ]
+  }
 
-#   depends_on = [
-#     google_project_service.product_apis,
-#     google_project_iam_member.tf_sa_required_roles
-#   ]
-# }
+  depends_on = [
+    google_project_service.product_apis,
+    google_project_iam_member.tf_sa_required_roles
+  ]
+}
 
 resource "google_cloud_run_service_iam_binding" "frontend_noauth" {
   location = google_cloud_run_service.frontend.location
@@ -411,9 +429,9 @@ resource "google_cloud_run_service_iam_binding" "frontend_noauth" {
   members  = ["allUsers"]
 }
 
-# resource "google_cloud_run_service_iam_binding" "backend_noauth" {
-#   location = google_cloud_run_service.backend.location
-#   service  = google_cloud_run_service.backend.name
-#   role     = "roles/run.invoker"
-#   members  = ["allUsers"]
-# }
+resource "google_cloud_run_service_iam_binding" "backend_noauth" {
+  location = google_cloud_run_service.backend.location
+  service  = google_cloud_run_service.backend.name
+  role     = "roles/run.invoker"
+  members  = ["allUsers"]
+}

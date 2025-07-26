@@ -13,6 +13,8 @@ backend_service_name   = "openchat-backend"
 # Database Configuration
 db_user = "openchat_user"
 
-# Container Images (leave empty for initial deployment)
+# Container Images
+# Format: REGION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
+# Example: us-west1-docker.pkg.dev/openchat-cs467-400/openchat/frontend:latest
 frontend_image = ""
 backend_image  = ""

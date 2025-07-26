@@ -13,10 +13,10 @@ output "frontend_url" {
   value       = google_cloud_run_service.frontend.status[0].url
 }
 
-# output "backend_url" {
-#   description = "Backend service URL"
-#   value       = google_cloud_run_service.backend.status[0].url
-# }
+output "backend_url" {
+  description = "Backend service URL"
+  value       = google_cloud_run_service.backend.status[0].url
+}
 
 output "database_instance_name" {
   description = "Cloud SQL instance name"

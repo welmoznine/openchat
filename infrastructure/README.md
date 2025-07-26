@@ -6,29 +6,47 @@ This directory contains Terraform configuration for deploying OpenChat on Google
 
 - **Frontend**: React application served via Cloud Run
 - **Backend**: Express.js/Socket.io API served via Cloud Run
-- **Database**: Cloud SQL PostgreSQL with private IP
+- **Database**: Cloud SQL PostgreSQL with private VPC connectivity
 - **Security**: Secret Manager for sensitive data, IAM with least privilege
+- **Registry**: Artifact Registry for container images
 
 ## Prerequisites
 
 1. Complete the bootstrap setup first (see bootstrap/README.md)
 2. Install Terraform >= 1.5
+3. Build and push container images to Artifact Registry
 
 ## Deployment Steps
 
-### 1. Configure Terraform
+### 1. Build and Push Container Images
 
 ```bash
-# Set authentication
+# Get registry URL
+REGISTRY_URL="<your-region>-docker.pkg.dev/<your-project-id>/openchat"
+
+# Build and push frontend
+docker build -t $REGISTRY_URL/frontend:latest ./client
+docker push $REGISTRY_URL/frontend:latest
+
+# Build and push backend
+docker build -t $REGISTRY_URL/backend:latest ./server
+docker push $REGISTRY_URL/backend:latest
+```
+
+### 2. Configure Terraform
+
+```bash
 cd terraform
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/../../terraform-key.json"
 
 # Copy and edit configuration
 cp terraform.tfvars.example terraform.tfvars
-# Edit terraform.tfvars with your project details
+# Edit terraform.tfvars with:
+# - project_id
+# - frontend_image
+# - backend_image
 ```
 
-### 2. Initialize and Deploy
+### 3. Deploy Infrastructure
 
 ```bash
 # Initialize Terraform with backend
@@ -39,7 +57,7 @@ terraform plan
 terraform apply
 ```
 
-### 3. Initialize Secrets
+### 4. Initialize Secrets
 
 After Terraform creates the resources, manually set the JWT secret:
 
@@ -47,8 +65,14 @@ After Terraform creates the resources, manually set the JWT secret:
 # JWT secret
 openssl rand -base64 32 | gcloud secrets versions add openchat-jwt-secret --data-file=-
 
-# DATABASE_URL
-DB_PRIVATE_IP=$(terraform output -raw database_private_ip)
-echo -n "postgresql://openchat_user:$(terraform output -raw database_password)@${DB_PRIVATE_IP}:5432/openchat" | \
-  gcloud secrets versions add openchat-database-url --data-file=-
+# DATABASE_URL (automatically created by Terraform)
+# No manual action needed - Cloud Run services read from Secret Manager
 ```
+
+## Outputs
+
+After deployment, Terraform provides:
+- `frontend_url`: Frontend application URL
+- `backend_url`: Backend API URL
+- `artifact_registry_url`: Registry URL for container images
+- `deployment_service_account`: Service account for CI/CD

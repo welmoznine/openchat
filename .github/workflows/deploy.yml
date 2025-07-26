@@ -8,6 +8,7 @@ env:
   PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
   REGION: ${{ vars.GCP_REGION }}
   REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
+  BACKEND_SA_EMAIL: openchat-backend-sa@${{ vars.GCP_PROJECT_ID }}.iam.gserviceaccount.com
 
 jobs:
   build-and-deploy:
@@ -32,10 +33,10 @@ jobs:
           docker build -f client/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }}
 
-      # - name: Build and push server image
-      #   run: |
-      #     docker build -f server/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} ./server
-      #     docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }}
+      - name: Build and push server image
+        run: |
+          docker build -f server/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} .
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }}
 
       - name: Deploy to Cloud Run
         run: |
@@ -45,12 +46,28 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated
-          
-          
-          # Backend deployment will be added later
-          # # gcloud run deploy openchat-backend \
-          # #   --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
-          # #   --region ${{ env.REGION }} \
-          # #   --platform managed \
-          # #   --allow-unauthenticated \
-          # #   --set-env-vars="NODE_ENV=production"
+
+          # Deploy backend
+          gcloud run deploy openchat-backend \
+            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="NODE_ENV=production" \
+            --update-secrets="JWT_SECRET=openchat-jwt-secret:latest" \
+            --update-secrets="DATABASE_URL=openchat-database-url:latest"
+
+      - name: Run database migrations
+        run: |
+          gcloud run jobs deploy db-migrate \
+            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --service-account ${{ env.BACKEND_SA_EMAIL }} \
+            --network openchat-vpc \
+            --subnet openchat-subnet \
+            --update-secrets="DATABASE_URL=openchat-database-url:latest" \
+            --command "npx" \
+            --args "prisma,migrate,deploy" \
+            --task-timeout 300 \
+            --execute-now \
+            --wait
