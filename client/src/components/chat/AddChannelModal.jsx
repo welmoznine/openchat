@@ -11,7 +11,7 @@ import { useAddChannel } from '../../hooks/channels/useAddChannel'
  *
  * @returns {JSX.Element|null} The rendered modal form or null if not visible.
  */
-export default function AddChannelPopover ({ showAddChannel, setShowAddChannel }) {
+export default function AddChannelModal ({ showAddChannel, setShowAddChannel, onChannelAdded }) {
   // State for form inputs
   const [channelName, setChannelName] = useState('')
   const [channelDescription, setChannelDescription] = useState('')
@@ -44,8 +44,14 @@ export default function AddChannelPopover ({ showAddChannel, setShowAddChannel }
       isPrivate
     }
 
-    addChannel(channelData)
-    setShowAddChannel(false)
+    addChannel(channelData).then(() => {
+      setShowAddChannel(false)
+      console.log('here1')
+      if (typeof onChannelAdded === 'function') {
+        console.log('here2')
+        onChannelAdded()
+      }
+    })
   }
 
   if (!showAddChannel) return null

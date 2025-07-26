@@ -3,7 +3,7 @@ import UserProfile from './UserProfile'
 import ChannelItem from './Channel'
 import DirectMessageItem from './DirectMessageItem'
 import OnlineMember from './OnlineMember'
-import AddChannelPopover from './AddChannelPopover'
+import AddChannelModal from './AddChannelModal'
 import { useState } from 'react'
 
 const Sidebar = ({
@@ -16,7 +16,8 @@ const Sidebar = ({
   onlineMembers,
   onLogout,
   isConnected,
-  toggleSidebar
+  toggleSidebar,
+  onChannelAdded
 }) => {
   const [showAddChannel, setShowAddChannel] = useState(false)
 
@@ -40,7 +41,7 @@ const Sidebar = ({
                 <path strokeLinecap='round' strokeLinejoin='round' d='M12 4.5v15m7.5-7.5h-15' />
               </svg>
             </div>
-            {showAddChannel && <AddChannelPopover showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} />}
+            {showAddChannel && <AddChannelModal showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} onChannelAdded={onChannelAdded} />}
           </div>
           <div />
           <div className='space-y-1'>
