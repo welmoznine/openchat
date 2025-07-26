@@ -10,7 +10,6 @@ export function useAddChannel () {
 
     const token = localStorage.getItem('token')
 
-    console.log('here')
     try {
       const res = await fetch('http://localhost:3000/api/user/channels', {
         method: 'POST',
@@ -18,11 +17,7 @@ export function useAddChannel () {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name: 'placeholder',
-          description: 'placeholder',
-          isPrivate: false
-        }),
+        body: JSON.stringify(channelData),
       })
 
       if (!res.ok) {
