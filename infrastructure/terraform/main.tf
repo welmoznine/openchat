@@ -385,7 +385,7 @@ resource "google_cloud_run_service" "backend" {
           }
           content {
             name = env.key
-            
+
             dynamic "value_from" {
               for_each = can(env.value.secret) ? [1] : []
               content {
@@ -395,7 +395,7 @@ resource "google_cloud_run_service" "backend" {
                 }
               }
             }
-            
+
             value = can(env.value.value) ? env.value.value : null
           }
         }
