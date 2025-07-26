@@ -11,7 +11,7 @@ export const createApp = () => {
 
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: process.env.PUBLIC_URL || "http://localhost:5173",
       credentials: true,
     })
   );

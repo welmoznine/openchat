@@ -36,7 +36,7 @@ const ProtectedRoute = ({ children }) => {
       return
     }
 
-    fetch('http://localhost:3000/api/auth/me', {
+    fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/me`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

@@ -34,7 +34,7 @@ export const useUserChannels = () => {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/api/user/channels', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/channels`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
