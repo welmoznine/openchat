@@ -37,19 +37,60 @@ router.get('/channels', async (req, res) => {
   try {
     console.log('User /channels endpoint hit, user:', req.user)
 
+    // Getting all public user channels, and also any private channels they are a member of
     const channels = await prisma.channel.findMany({
       where: {
-        members: {
-          some: { userId: req.user.id },
-        },
+        OR: [
+          { isPrivate: false }, // Public channels
+          {
+            AND: [
+              { isPrivate: true },
+              {
+                members: {
+                  some: { userId: req.user.id }, // Private channels the user is in
+                },
+              },
+            ],
+          },
+        ],
       },
     })
 
-    console.log(`Found ${channels.length} channels for user ${req.user.id}`)
+    console.log(`Found ${channels.length} accessible channels for user ${req.user.id}`)
     res.json(channels)
   } catch (error) {
     console.error('Error in /channels:', error)
     res.status(500).json({ error: 'Failed to fetch user channels' })
+  }
+})
+
+router.post('/channels', async (req, res) => {
+  try {
+    const { name, description, isPrivate } = req.body
+
+    // Checking for name & length <= 100
+    if (name && name.length > 100) {
+      return res.status(400).json({ error: 'Name exceeds 100 characters.' })
+    }
+
+    if (description && description.length > 255) {
+      return res.status(400).json({ error: 'Description exceeds 255 characters' })
+    }
+
+    const newChannel = await prisma.channel.create({
+
+      data: {
+        name,
+        description,
+        isPrivate
+      },
+
+    })
+
+    return res.status(201).json(newChannel)
+  } catch (error) {
+    console.error('Failed to create channel: ', error)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 })
 

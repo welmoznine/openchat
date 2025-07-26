@@ -4,7 +4,7 @@ import Message from './Message'
 import MessageInput from './MessageInput'
 
 const ChatArea = ({ channelName, description, messages, onSendMessage }) => (
-  <div className='flex-1 flex flex-col bg-slate-700'>
+  <div className='h-screen w-screen md:flex-1 md:flex md:flex-col bg-slate-700'>
     <ChatHeader channelName={channelName} description={description} />
 
     <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
