@@ -33,6 +33,7 @@ function ChatPage () {
   const [typingUsers, setTypingUsers] = useState(new Set()) // Users currently typing
   const [notification, setNotification] = useState(null) // Notification state
   const [activeChannel, setActiveChannel] = useState('general') // Active channel state, default to "general"
+  const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
 
   // Refs
   const messagesEndRef = useRef(null) // Ref for auto-scrolling to bottom of messages
@@ -315,6 +316,10 @@ function ChatPage () {
     logout()
   }
 
+  const toggleSidebar = () => {
+    setShowSidebar(prev => !prev)
+  }
+
   // Add loading state check
   if (!user) {
     return (
@@ -340,75 +345,81 @@ function ChatPage () {
   }
 
   return (
-    <div className='h-screen flex bg-slate-800 text-white'>
-      <Sidebar
-        currentUser={currentUserData}
-        channels={channels}
-        activeChannel={activeChannel}
-        onChannelSelect={handleChannelSelect}
-        directMessages={directMessages}
-        onDirectMessageSelect={handleDirectMessageSelect}
-        onlineMembers={onlineMembers}
-        onLogout={handleLogout}
-        isConnected={socketConnected}
-        SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
-      />
-
-      <div className='flex-1 flex flex-col bg-slate-700'>
-        <ChatHeader
-          channelName={activeChannel}
-          // Look up the channel description from channels array based on activeChannel
-          description={
-            channels.find((c) => c.name === activeChannel)?.description || ''
-          }
-          isConnected={socketConnected}
-        />
-
-        <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
-          {formattedMessages.map((message) => (
-            <Message key={message.id} message={message} />
-          ))}
-
-          {/* Typing indicators */}
-          {typingUsers.size > 0 && (
-            <div className='flex space-x-3 px-2 py-1'>
-              <div className='w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0'>
-                <span className='text-sm text-white'>💭</span>
-              </div>
-              <div className='flex-1 min-w-0'>
-                <div className='flex items-baseline space-x-2 mb-1'>
-                  <span className='font-medium text-white'>
-                    {Array.from(typingUsers).join(', ')}
-                  </span>
-                </div>
-                <div className='text-gray-300 italic'>
-                  {typingUsers.size === 1 ? 'is' : 'are'} typing...
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
-        </div>
-
-        <MessageInput
-          value={currentMessage}
-          onSendMessage={handleSendMessage}
-          onInputChange={handleInputChange}
-          isConnected={socketConnected}
-          placeholder={`Message #${activeChannel}`}
-        />
-      </div>
-
-      {notification && (
-        <div className='fixed top-4 right-4 z-50 space-y-2'>
-          <Notification
-            notification={notification}
-            onClose={handleCloseNotification}
+    <>
+      <div className='h-full w-full bg-slate-800 text-white md:h-screen md:flex relative'>
+        <div className={`${showSidebar ? 'fixed left-0' : 'hidden'} top-0 bottom-0 w-64 bg-slate-900 z-50 md:static md:flex md:w-64`}>
+          <Sidebar
+            currentUser={currentUserData}
+            channels={channels}
+            activeChannel={activeChannel}
+            onChannelSelect={handleChannelSelect}
+            directMessages={directMessages}
+            onDirectMessageSelect={handleDirectMessageSelect}
+            onlineMembers={onlineMembers}
+            onLogout={handleLogout}
+            isConnected={socketConnected}
+            SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
+            toggleSidebar={toggleSidebar}
+            showSidebar={showSidebar}
           />
         </div>
-      )}
-    </div>
+        <div className='flex flex-1 flex-col bg-slate-700 h-screen'>
+          <ChatHeader
+            channelName={activeChannel}
+            // Look up the channel description from channels array based on activeChannel
+            description={
+              channels.find((c) => c.name === activeChannel)?.description || ''
+            }
+            isConnected={socketConnected}
+            toggleSidebar={toggleSidebar}
+          />
+
+          <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
+            {formattedMessages.map((message) => (
+              <Message key={message.id} message={message} />
+            ))}
+
+            {/* Typing indicators */}
+            {typingUsers.size > 0 && (
+              <div className='flex space-x-3 px-2 py-1'>
+                <div className='w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0'>
+                  <span className='text-sm text-white'>💭</span>
+                </div>
+                <div className='flex-1 min-w-0'>
+                  <div className='flex items-baseline space-x-2 mb-1'>
+                    <span className='font-medium text-white'>
+                      {Array.from(typingUsers).join(', ')}
+                    </span>
+                  </div>
+                  <div className='text-gray-300 italic'>
+                    {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div ref={messagesEndRef} />
+          </div>
+
+          <MessageInput
+            value={currentMessage}
+            onSendMessage={handleSendMessage}
+            onInputChange={handleInputChange}
+            isConnected={socketConnected}
+            placeholder={`Message #${activeChannel}`}
+          />
+        </div>
+
+        {notification && (
+          <div className='fixed top-4 right-4 z-50 space-y-2'>
+            <Notification
+              notification={notification}
+              onClose={handleCloseNotification}
+            />
+          </div>
+        )}
+      </div>
+    </>
   )
 }
 
