@@ -46,11 +46,7 @@ export default function AddChannelModal ({ showAddChannel, setShowAddChannel, on
 
     addChannel(channelData).then(() => {
       setShowAddChannel(false)
-      console.log('here1')
-      if (typeof onChannelAdded === 'function') {
-        console.log('here2')
-        onChannelAdded()
-      }
+      onChannelAdded()
     })
   }
 
