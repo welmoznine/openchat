@@ -41,19 +41,14 @@ terraform apply
 
 ### 3. Initialize Secrets
 
-After Terraform creates the resources, manually set secret values:
+After Terraform creates the resources, manually set the JWT secret:
 
 ```bash
 # JWT secret
 openssl rand -base64 32 | gcloud secrets versions add openchat-jwt-secret --data-file=-
 
-# Database password
-DB_PASSWORD=$(openssl rand -hex 16)
-echo -n "$DB_PASSWORD" | gcloud secrets versions add openchat-db-password --data-file=-
-gcloud sql users set-password openchat_user --instance=openchat-db --password="$DB_PASSWORD"
-
 # DATABASE_URL
 DB_PRIVATE_IP=$(terraform output -raw database_private_ip)
-echo -n "postgresql://openchat_user:${DB_PASSWORD}@${DB_PRIVATE_IP}:5432/openchat" | \
+echo -n "postgresql://openchat_user:$(terraform output -raw database_password)@${DB_PRIVATE_IP}:5432/openchat" | \
   gcloud secrets versions add openchat-database-url --data-file=-
 ```

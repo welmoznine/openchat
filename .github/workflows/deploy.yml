@@ -1,0 +1,56 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  REGION: ${{ vars.GCP_REGION }}
+  REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Google Cloud
+        run: gcloud auth configure-docker ${{ env.REGISTRY }}
+
+      - name: Build and push client image
+        run: |
+          docker build -f client/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
+          docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }}
+
+      # - name: Build and push server image
+      #   run: |
+      #     docker build -f server/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} ./server
+      #     docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          # Deploy frontend
+          gcloud run deploy openchat-frontend \
+            --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated
+          
+          
+          # Backend deployment will be added later
+          # # gcloud run deploy openchat-backend \
+          # #   --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
+          # #   --region ${{ env.REGION }} \
+          # #   --platform managed \
+          # #   --allow-unauthenticated \
+          # #   --set-env-vars="NODE_ENV=production"
