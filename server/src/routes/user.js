@@ -68,6 +68,9 @@ router.post('/channels', async (req, res) => {
   try {
     const { name, description, isPrivate } = req.body
 
+    // Get user id
+    const userId = req.user?.id
+
     // Checking for name & length <= 100
     if (name && name.length > 100) {
       return res.status(400).json({ error: 'Name exceeds 100 characters.' })
@@ -86,6 +89,16 @@ router.post('/channels', async (req, res) => {
       },
 
     })
+
+    // If it is a private channel adding creator as member
+    if (isPrivate) {
+      await prisma.channelMember.create({
+        data: {
+          userId,
+          channelId: newChannel.id
+        }
+      })
+    }
 
     return res.status(201).json(newChannel)
   } catch (error) {
