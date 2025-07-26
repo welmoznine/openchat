@@ -59,6 +59,3 @@ terraform-key.json
 docker-compose.yml
 **/.dockerignore
 **/Dockerfile
-
-# Prisma
-server/prisma/migrations/

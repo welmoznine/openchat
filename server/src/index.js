@@ -5,7 +5,7 @@ const app = createApp()
 const server = createServer(app)
 const io = new SocketServer(server, {
   cors: {
-    origin: 'http://localhost:5173', // Vite dev server
+    origin: process.env.PUBLIC_URL || 'http://localhost:5173', // Frontend URL
     methods: ['GET', 'POST']
   }
 })

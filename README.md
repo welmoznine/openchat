@@ -39,9 +39,18 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
 
 3. Set up environment variables:
 
+   **Server (required):**
    ```bash
    cd server
    cp .env.sample .env
+   # Edit .env to configure your database connection if needed
+   ```
+
+   **Client (for development):**
+   ```bash
+   cd client
+   cp .env.example .env
+   # The default values work for local development
    ```
 
 4. Start the database:
@@ -247,3 +256,8 @@ This project uses GitHub Actions to run automated workflows for code quality and
    - Runs tests and linting on all branches
    - Integration tests with PostgreSQL database
    - Coverage report generation
+
+2. **Deploy** - `deploy.yml`
+   - Deploys to Google Cloud Run on main branch
+   - Builds and pushes Docker images to Artifact Registry
+   - Updates Cloud Run services via Terraform

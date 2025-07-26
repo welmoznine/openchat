@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { io } from 'socket.io-client'
 
-export const useSocket = (serverUrl = 'http://localhost:3000') => {
+export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
   const socketRef = useRef(null)
   const [isConnected, setIsConnected] = useState(false)
 

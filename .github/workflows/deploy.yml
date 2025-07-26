@@ -30,7 +30,9 @@ jobs:
 
       - name: Build and push client image
         run: |
-          docker build -f client/Dockerfile -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
+          docker build -f client/Dockerfile \
+            --build-arg VITE_API_BASE_URL=https://openchat-backend-${{ vars.GCP_PROJECT_NUMBER }}.${{ env.REGION }}.run.app \
+            -t ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} .
           docker push ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }}
 
       - name: Build and push server image
@@ -53,7 +55,7 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --set-env-vars="NODE_ENV=production" \
+            --set-env-vars="NODE_ENV=production,PUBLIC_URL=https://openchat-frontend-${{ vars.GCP_PROJECT_NUMBER }}.${{ env.REGION }}.run.app" \
             --update-secrets="JWT_SECRET=openchat-jwt-secret:latest" \
             --update-secrets="DATABASE_URL=openchat-database-url:latest"
 

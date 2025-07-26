@@ -283,52 +283,43 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 }
 
 # Cloud Run Services
-resource "google_cloud_run_service" "frontend" {
+resource "google_cloud_run_v2_service" "frontend" {
   name     = var.frontend_service_name
   location = var.region
 
   template {
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale" = "10"
+    service_account = google_service_account.frontend.email
+
+    containers {
+      image = var.frontend_image != "" ? var.frontend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
+
+      ports {
+        container_port = 8080
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
       }
     }
 
-    spec {
-      service_account_name = google_service_account.frontend.email
-
-      containers {
-        image = var.frontend_image != "" ? var.frontend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
-
-        ports {
-          container_port = 8080
-        }
-
-        resources {
-          limits = {
-            cpu    = "1"
-            memory = "512Mi"
-          }
-        }
-
-        env {
-          name  = "VITE_API_BASE_URL"
-          value = "https://${var.backend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
-        }
-      }
+    scaling {
+      max_instance_count = 10
     }
   }
 
   traffic {
-    percent         = 100
-    latest_revision = true
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
   }
 
   lifecycle {
     ignore_changes = [
-      template[0].metadata[0].annotations["run.googleapis.com/client-name"],
-      template[0].metadata[0].annotations["run.googleapis.com/client-version"],
-      template[0].spec[0].containers[0].image,
+      template[0].containers[0].image,
+      client,
+      client_version,
     ]
   }
 
@@ -338,81 +329,83 @@ resource "google_cloud_run_service" "frontend" {
   ]
 }
 
-resource "google_cloud_run_service" "backend" {
+resource "google_cloud_run_v2_service" "backend" {
   name     = var.backend_service_name
   location = var.region
 
   template {
-    metadata {
-      annotations = {
-        "autoscaling.knative.dev/maxScale"      = "10"
-        "run.googleapis.com/network-interfaces" = "[{\"network\":\"${google_compute_network.main.name}\",\"subnetwork\":\"${google_compute_subnetwork.main.name}\"}]"
-        "run.googleapis.com/vpc-access-egress"  = "all-traffic"
+    service_account = google_service_account.backend.email
+
+    containers {
+      image = var.backend_image != "" ? var.backend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
+
+      ports {
+        container_port = 3000
+      }
+
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "1Gi"
+        }
+      }
+
+      dynamic "env" {
+        for_each = {
+          "DATABASE_URL" = {
+            secret = google_secret_manager_secret.database_url.secret_id
+          }
+          "JWT_SECRET" = {
+            secret = google_secret_manager_secret.jwt_secret.secret_id
+          }
+          "NODE_ENV" = {
+            value = "production"
+          }
+          "PUBLIC_URL" = {
+            value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
+          }
+        }
+        content {
+          name = env.key
+
+          dynamic "value_source" {
+            for_each = can(env.value.secret) ? [1] : []
+            content {
+              secret_key_ref {
+                secret  = env.value.secret
+                version = "latest"
+              }
+            }
+          }
+
+          value = can(env.value.value) ? env.value.value : null
+        }
       }
     }
 
-    spec {
-      service_account_name = google_service_account.backend.email
+    scaling {
+      max_instance_count = 10
+    }
 
-      containers {
-        image = var.backend_image != "" ? var.backend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/backend:latest"
-
-        ports {
-          container_port = 3000
-        }
-
-        resources {
-          limits = {
-            cpu    = "1"
-            memory = "1Gi"
-          }
-        }
-
-        dynamic "env" {
-          for_each = {
-            "DATABASE_URL" = {
-              secret = google_secret_manager_secret.database_url.secret_id
-            }
-            "JWT_SECRET" = {
-              secret = google_secret_manager_secret.jwt_secret.secret_id
-            }
-            "NODE_ENV" = {
-              value = "production"
-            }
-            "PUBLIC_URL" = {
-              value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
-            }
-          }
-          content {
-            name = env.key
-
-            dynamic "value_from" {
-              for_each = can(env.value.secret) ? [1] : []
-              content {
-                secret_key_ref {
-                  name = env.value.secret
-                  key  = "latest"
-                }
-              }
-            }
-
-            value = can(env.value.value) ? env.value.value : null
-          }
-        }
+    vpc_access {
+      network_interfaces {
+        network    = google_compute_network.main.name
+        subnetwork = google_compute_subnetwork.main.name
       }
+      egress = "ALL_TRAFFIC"
     }
   }
 
   traffic {
-    percent         = 100
-    latest_revision = true
+    type    = "TRAFFIC_TARGET_ALLOCATION_TYPE_LATEST"
+    percent = 100
   }
 
   lifecycle {
     ignore_changes = [
-      template[0].metadata[0].annotations["run.googleapis.com/client-name"],
-      template[0].metadata[0].annotations["run.googleapis.com/client-version"],
-      template[0].spec[0].containers[0].image,
+      template[0].containers[0].image,
+      client,
+      client_version,
     ]
   }
 
@@ -422,16 +415,16 @@ resource "google_cloud_run_service" "backend" {
   ]
 }
 
-resource "google_cloud_run_service_iam_binding" "frontend_noauth" {
-  location = google_cloud_run_service.frontend.location
-  service  = google_cloud_run_service.frontend.name
+resource "google_cloud_run_v2_service_iam_binding" "frontend_noauth" {
+  location = google_cloud_run_v2_service.frontend.location
+  name     = google_cloud_run_v2_service.frontend.name
   role     = "roles/run.invoker"
   members  = ["allUsers"]
 }
 
-resource "google_cloud_run_service_iam_binding" "backend_noauth" {
-  location = google_cloud_run_service.backend.location
-  service  = google_cloud_run_service.backend.name
+resource "google_cloud_run_v2_service_iam_binding" "backend_noauth" {
+  location = google_cloud_run_v2_service.backend.location
+  name     = google_cloud_run_v2_service.backend.name
   role     = "roles/run.invoker"
   members  = ["allUsers"]
 }
