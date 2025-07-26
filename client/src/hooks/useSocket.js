@@ -12,8 +12,7 @@ export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
       const token = localStorage.getItem('token')
 
       socketRef.current = io(serverUrl, {
-        transports: ['websocket'],
-        upgrade: false,
+        transports: ['polling', 'websocket'],
         auth: { token },
         reconnection: true,
         reconnectionDelay: 1000,
@@ -35,6 +34,8 @@ export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
 
       socket.on('connect_error', (error) => {
         console.error('Connection error:', error)
+        console.error('Error type:', error.type)
+        console.error('Error message:', error.message)
         setIsConnected(false)
       })
 

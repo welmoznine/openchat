@@ -5,8 +5,9 @@ const app = createApp()
 const server = createServer(app)
 const io = new SocketServer(server, {
   cors: {
-    origin: process.env.PUBLIC_URL || 'http://localhost:5173', // Frontend URL
-    methods: ['GET', 'POST']
+    origin: process.env.PUBLIC_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 })
 
