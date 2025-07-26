@@ -34,14 +34,15 @@ variable "db_user" {
   default     = "openchat_user"
 }
 
-# variable "frontend_image" {
-#   description = "Frontend container image"
-#   type        = string
-#   default     = ""
-# }
+variable "frontend_image" {
+  description = "Frontend container image"
+  type        = string
+  default     = ""
+}
 
-# variable "backend_image" {
-#   description = "Backend container image"
-#   type        = string
-#   default     = ""
-# }
+variable "backend_image" {
+  description = "Backend container image"
+  type        = string
+  default     = ""
+}
+

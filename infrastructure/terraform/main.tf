@@ -36,6 +36,7 @@ resource "google_project_service" "product_apis" {
   depends_on = [google_project_service.meta_apis]
 }
 
+# Terraform Service Account
 data "google_service_account" "terraform" {
   account_id = "terraform-sa@${var.project_id}.iam.gserviceaccount.com"
 }
@@ -56,6 +57,28 @@ resource "google_project_iam_member" "tf_sa_required_roles" {
   project = var.project_id
   role    = each.value
   member  = "serviceAccount:${data.google_service_account.terraform.email}"
+}
+
+# Deployment Service Account
+resource "google_service_account" "deployment_sa" {
+  account_id   = "deployment-sa"
+  display_name = "Deployment Service Account"
+  description  = "Service account for deployment to Cloud Run"
+}
+
+resource "google_project_iam_member" "deployment_sa_permissions" {
+  for_each = toset([
+    "roles/run.admin",
+    "roles/artifactregistry.writer",
+    "roles/iam.serviceAccountUser",
+    "roles/cloudbuild.builds.builder",
+    "roles/storage.objectAdmin",
+    "roles/logging.logWriter"
+  ])
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.deployment_sa.email}"
 }
 
 # VPC and Networking
@@ -260,54 +283,52 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 }
 
 # Cloud Run Services
-# resource "google_cloud_run_service" "frontend" {
-#   name     = var.frontend_service_name
-#   location = var.region
+resource "google_cloud_run_service" "frontend" {
+  name     = var.frontend_service_name
+  location = var.region
 
-#   template {
-#     metadata {
-#       annotations = {
-#         "autoscaling.knative.dev/maxScale" = "10"
-#         "run.googleapis.com/network-interfaces" = "[{\"network\":\"${google_compute_network.main.name}\",\"subnetwork\":\"${google_compute_subnetwork.main.name}\"}]"
-#         "run.googleapis.com/vpc-access-egress" = "all-traffic"
-#       }
-#     }
+  template {
+    metadata {
+      annotations = {
+        "autoscaling.knative.dev/maxScale" = "10"
+      }
+    }
 
-#     spec {
-#       service_account_name = google_service_account.frontend.email
+    spec {
+      service_account_name = google_service_account.frontend.email
 
-#       containers {
-#         image = var.frontend_image != "" ? var.frontend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
+      containers {
+        image = var.frontend_image != "" ? var.frontend_image : "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}/frontend:latest"
 
-#         ports {
-#           container_port = 80
-#         }
+        ports {
+          container_port = 8080
+        }
 
-#         resources {
-#           limits = {
-#             cpu    = "1"
-#             memory = "512Mi"
-#           }
-#         }
+        resources {
+          limits = {
+            cpu    = "1"
+            memory = "512Mi"
+          }
+        }
 
-#         env {
-#           name  = "VITE_API_BASE_URL"
-#           value = "https://${var.backend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
-#         }
-#       }
-#     }
-#   }
+        env {
+          name  = "VITE_API_BASE_URL"
+          value = "https://${var.backend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
+        }
+      }
+    }
+  }
 
-#   traffic {
-#     percent         = 100
-#     latest_revision = true
-#   }
+  traffic {
+    percent         = 100
+    latest_revision = true
+  }
 
-#   depends_on = [
-#     google_project_service.product_apis,
-#     google_project_iam_member.tf_sa_required_roles
-#   ]
-# }
+  depends_on = [
+    google_project_service.product_apis,
+    google_project_iam_member.tf_sa_required_roles
+  ]
+}
 
 # resource "google_cloud_run_service" "backend" {
 #   name     = var.backend_service_name
@@ -383,12 +404,12 @@ resource "google_secret_manager_secret_iam_member" "backend_database_url_accesso
 #   ]
 # }
 
-# resource "google_cloud_run_service_iam_binding" "frontend_noauth" {
-#   location = google_cloud_run_service.frontend.location
-#   service  = google_cloud_run_service.frontend.name
-#   role     = "roles/run.invoker"
-#   members  = ["allUsers"]
-# }
+resource "google_cloud_run_service_iam_binding" "frontend_noauth" {
+  location = google_cloud_run_service.frontend.location
+  service  = google_cloud_run_service.frontend.name
+  role     = "roles/run.invoker"
+  members  = ["allUsers"]
+}
 
 # resource "google_cloud_run_service_iam_binding" "backend_noauth" {
 #   location = google_cloud_run_service.backend.location

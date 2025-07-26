@@ -8,10 +8,10 @@ output "region" {
   value       = var.region
 }
 
-# output "frontend_url" {
-#   description = "Frontend service URL"
-#   value       = google_cloud_run_service.frontend.status[0].url
-# }
+output "frontend_url" {
+  description = "Frontend service URL"
+  value       = google_cloud_run_service.frontend.status[0].url
+}
 
 # output "backend_url" {
 #   description = "Backend service URL"
@@ -28,9 +28,9 @@ output "database_connection_name" {
   value       = google_sql_database_instance.main.connection_name
 }
 
-output "artifact_registry_repository" {
+output "artifact_registry_url" {
   description = "Artifact Registry repository URL"
-  value       = google_artifact_registry_repository.main.name
+  value       = "${var.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.main.repository_id}"
 }
 
 output "database_password_secret" {
@@ -39,8 +39,19 @@ output "database_password_secret" {
   sensitive   = true
 }
 
+output "database_password" {
+  description = "Generated database password"
+  value       = random_password.db_password.result
+  sensitive   = true
+}
+
 output "database_private_ip" {
   description = "Cloud SQL instance private IP address"
   value       = google_sql_database_instance.main.private_ip_address
   sensitive   = true
+}
+
+output "deployment_service_account" {
+  description = "Deployment service account email"
+  value       = google_service_account.deployment_sa.email
 }
