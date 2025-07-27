@@ -38,8 +38,9 @@ export const createApp = () => {
   return app
 }
 
-// Store connected users
+// Store connected users by userId to prevent duplicates
 const connectedUsers = new Map()
+const usersByUserId = new Map()
 
 // Socket.io connection handler
 export const handleSocketConnection = (socket) => {
@@ -47,6 +48,16 @@ export const handleSocketConnection = (socket) => {
 
   // Handle user joining
   socket.on('user_join', (userData) => {
+    const existingSocketId = usersByUserId.get(userData.userId)
+    if (existingSocketId && existingSocketId !== socket.id) {
+      const existingSocket = socket.server.sockets.sockets.get(existingSocketId)
+      if (existingSocket) {
+        existingSocket.disconnect(true)
+      }
+      connectedUsers.delete(existingSocketId)
+      usersByUserId.delete(userData.userId)
+    }
+
     const user = {
       id: socket.id,
       username: userData.username,
@@ -55,15 +66,19 @@ export const handleSocketConnection = (socket) => {
     }
 
     connectedUsers.set(socket.id, user)
+    usersByUserId.set(userData.userId, socket.id)
 
     // Join the default channel room
     socket.join(user.currentChannel)
     console.log(`${userData.username} joined room: ${user.currentChannel}`)
 
-    // Send current users list to all users
-    const usersList = Array.from(connectedUsers.values())
-    socket.emit('users_list', usersList)
-    socket.broadcast.emit('users_list', usersList)
+    const uniqueUsers = Array.from(usersByUserId.keys()).map(userId => {
+      const socketId = usersByUserId.get(userId)
+      return connectedUsers.get(socketId)
+    }).filter(Boolean)
+    
+    socket.emit('users_list', uniqueUsers)
+    socket.broadcast.emit('users_list', uniqueUsers)
 
     console.log(`${userData.username} joined the chat`)
   })
@@ -177,10 +192,14 @@ export const handleSocketConnection = (socket) => {
       socket.leave(user.currentChannel)
 
       connectedUsers.delete(socket.id)
+      usersByUserId.delete(user.userId)
 
-      // Send updated users list to all clients
-      const usersList = Array.from(connectedUsers.values())
-      socket.broadcast.emit('users_list', usersList)
+      const uniqueUsers = Array.from(usersByUserId.keys()).map(userId => {
+        const socketId = usersByUserId.get(userId)
+        return connectedUsers.get(socketId)
+      }).filter(Boolean)
+      
+      socket.broadcast.emit('users_list', uniqueUsers)
 
       console.log(`${user.username} disconnected from room: ${user.currentChannel}`)
     } else {

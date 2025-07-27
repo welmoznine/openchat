@@ -55,6 +55,7 @@ jobs:
             --region ${{ env.REGION }} \
             --platform managed \
             --allow-unauthenticated \
+            --timeout=900 \
             --set-env-vars="NODE_ENV=production,PUBLIC_URL=https://openchat-frontend-${{ vars.GCP_PROJECT_NUMBER }}.${{ env.REGION }}.run.app" \
             --update-secrets="JWT_SECRET=openchat-jwt-secret:latest" \
             --update-secrets="DATABASE_URL=openchat-database-url:latest"

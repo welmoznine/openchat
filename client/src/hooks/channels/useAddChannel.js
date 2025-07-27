@@ -11,7 +11,7 @@ export function useAddChannel () {
     const token = localStorage.getItem('token')
 
     try {
-      const res = await fetch('http://localhost:3000/api/user/channels', {
+      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/channels`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
