@@ -24,6 +24,7 @@ function ChatPage () {
     channels,
     loading: channelsLoading,
     error: channelsError,
+    refreshChannels
   } = useUserChannels()
 
   // State variables
@@ -361,6 +362,7 @@ function ChatPage () {
             SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
             toggleSidebar={toggleSidebar}
             showSidebar={showSidebar}
+            onChannelAdded={refreshChannels}
           />
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>

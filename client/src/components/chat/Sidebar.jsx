@@ -3,7 +3,8 @@ import UserProfile from './UserProfile'
 import ChannelItem from './Channel'
 import DirectMessageItem from './DirectMessageItem'
 import OnlineMember from './OnlineMember'
-import { useAddChannel } from '../../hooks/channels/useAddChannel'
+import AddChannelModal from './AddChannelModal'
+import { useState } from 'react'
 
 const Sidebar = ({
   currentUser,
@@ -15,9 +16,10 @@ const Sidebar = ({
   onlineMembers,
   onLogout,
   isConnected,
-  toggleSidebar
+  toggleSidebar,
+  onChannelAdded
 }) => {
-  const { addChannel } = useAddChannel()
+  const [showAddChannel, setShowAddChannel] = useState(false)
 
   return (
     <div className='h-screen w-screen bg-slate-900 md:w-64 md:flex md:flex-col'>
@@ -29,16 +31,17 @@ const Sidebar = ({
       />
 
       <div className='flex-1 overflow-y-auto'>
-        <div className='px-4 py-2'>
+        <div className='relative px-4 py-2'>
           <div className='flex items-center mb-2'>
             <h3 className='text-xs text-gray-400 uppercase tracking-wide'>
               Channels
             </h3>
-            <div className='ml-auto cursor-pointer hover:text-gray-500' onClick={() => addChannel()}>
+            <div className='ml-auto cursor-pointer hover:text-gray-500' onClick={() => setShowAddChannel(true)}>
               <svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' strokeWidth={1.5} stroke='currentColor' className='size-4'>
                 <path strokeLinecap='round' strokeLinejoin='round' d='M12 4.5v15m7.5-7.5h-15' />
               </svg>
             </div>
+            {showAddChannel && <AddChannelModal showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} onChannelAdded={onChannelAdded} />}
           </div>
           <div />
           <div className='space-y-1'>
@@ -47,6 +50,7 @@ const Sidebar = ({
                 key={channel.id}
                 name={channel.name}
                 isActive={activeChannel === channel.name}
+                isPrivate={channel.isPrivate}
                 unreadCount={channel.unreadCount}
                 onClick={() => onChannelSelect(channel.name)}
               />
