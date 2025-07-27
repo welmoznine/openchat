@@ -3,8 +3,10 @@ import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 
 const prisma = new PrismaClient()
-// TODO: Remove hardcoded secret in production
-const JWT_SECRET = process.env.JWT_SECRET || 'J@pZr7!b9Xh3uV$e2TqWlM8nDf#A1KcY'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable must be set')
+}
 
 export const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers.authorization

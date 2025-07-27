@@ -9,7 +9,10 @@ const debug = createDebug('openchat:auth')
 const router = Router()
 const prisma = new PrismaClient()
 
-const JWT_SECRET = process.env.JWT_SECRET || 'J@pZr7!b9Xh3uV$e2TqWlM8nDf#A1KcY'
+const JWT_SECRET = process.env.JWT_SECRET
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable must be set')
+}
 const JWT_EXPIRES_IN = '24h'
 
 router.post('/register', async (req, res) => {
