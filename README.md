@@ -43,7 +43,9 @@ An open-source, fully customizable web-based chat platform that bridges the gap 
    ```bash
    cd server
    cp .env.sample .env
-   # Edit .env to configure your database connection if needed
+   # Edit .env file:
+   # - Configure DATABASE_URL if using non-default database settings
+   # - Set JWT_SECRET (generate with: openssl rand -base64 32)
    ```
 
    **Client (for development):**
