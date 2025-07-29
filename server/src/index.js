@@ -1,7 +1,11 @@
 import { createServer } from 'http'
 import { Server as SocketServer } from 'socket.io'
 import { createApp, handleSocketConnection } from './app.js'
-const app = createApp()
+
+// Destructure app and prisma from createApp
+const { app, prisma } = createApp() 
+
+// Set up Socket.io server with CORS
 const server = createServer(app)
 const io = new SocketServer(server, {
   cors: {
@@ -13,8 +17,8 @@ const io = new SocketServer(server, {
 
 const PORT = process.env.PORT || 3000
 
-// Socket.io connection handling
-io.on('connection', (socket) => handleSocketConnection(socket, io))
+// Pass 'io' and 'prisma' to the handler
+io.on('connection', (socket) => handleSocketConnection(socket, io, prisma))
 
 // Start server
 server.listen(PORT, () => {

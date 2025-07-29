@@ -49,10 +49,10 @@ const Sidebar = ({
               <ChannelItem
                 key={channel.id}
                 name={channel.name}
-                isActive={activeChannel === channel.name}
+                isActive={activeChannel === channel.id}
                 isPrivate={channel.isPrivate}
                 unreadCount={channel.unreadCount}
-                onClick={() => onChannelSelect(channel.name)}
+                onClick={() => onChannelSelect(channel.id)}
               />
             ))}
           </div>
