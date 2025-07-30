@@ -75,98 +75,96 @@ function ChatPage () {
     }
   }, [channels, activeChannelId])
 
-  // Effect to handle socket events
+  // Effect to handle socket events and user join
   useEffect(() => {
-    // Check if socket and user are available
-    if (!socket || !user) {
-      console.log('Socket or user not available:', {
-        socket: !!socket,
-        user: !!user,
-      })
-      return
+  // Ensure socket, user, and activeChannelId are available before proceeding
+    if (!socket || !user || !activeChannelId) {
+      console.log(
+        'Waiting for socket, user, or activeChannelId to be ready:',
+        { socket: !!socket, user: !!user, activeChannelId: !!activeChannelId }
+      )
+      return // Exit if any crucial dependency is not ready
     }
 
-    // Log socket connection status
     console.log('Setting up socket listeners for user:', user.username)
     console.log('Socket connected status:', socketConnected)
 
-    // Join the chat room when socket and user are both available
+    // Emit user_join only when socket is connected AND activeChannelId is set
+    // This covers the initial connection and cases where activeChannelId might change after the initial connect
     if (socketConnected) {
-      console.log('Emitting user_join for:', user.username)
+      console.log('Emitting user_join for:', user.username, 'to channel:', activeChannelId)
       socket.emit('user_join', {
         username: user.username,
         userId: user.id,
-        channel: activeChannelId, // Include current channel
+        channel: activeChannelId, // This will now always have a value
       })
     }
 
-    // Socket event listeners
-    socket.on('connect', () => {
+    // Define socket event handlers
+    const onConnect = () => {
       console.log('Socket connected in ChatPage:', socket.id)
-      // Join the chat room when we connect
-      socket.emit('user_join', {
-        username: user.username,
-        userId: user.id,
-        channel: activeChannelId, // Include current channel
-      })
-    })
+      // Re-emit user_join on reconnect to ensure user state is synchronized
+      // This is important if the user was disconnected and then reconnected
+      if (user && activeChannelId) {
+        console.log('Re-emitting user_join on connect for:', user.username, 'to channel:', activeChannelId)
+        socket.emit('user_join', {
+          username: user.username,
+          userId: user.id,
+          channel: activeChannelId,
+        })
+      }
+    }
 
-    socket.on('disconnect', () => {
+    const onDisconnect = () => {
       console.log('Socket disconnected in ChatPage')
-    })
+    }
 
-    socket.on('receive_message', (message) => {
+    const onReceiveMessage = (message) => {
       if (message.channel === activeChannelId) {
         appendNewMessage(message)
       }
-    })
+    }
 
-    socket.on('message_sent', (message) => {
+    const onMessageSent = (message) => {
       if (message.channel === activeChannelId) {
         appendNewMessage(message)
       }
-    })
+    }
 
-    socket.on('channel_joined', (data) => {
+    const onChannelJoined = (data) => {
       console.log('Successfully joined channel:', data.channel)
       if (data.previousChannel) {
         console.log('Left previous channel:', data.previousChannel)
       }
-    })
+    }
 
-    socket.on('message_notification', (notificationData) => {
-      console.log('Received notification:', notificationData) // Debug log
+    const onMessageNotification = (notificationData) => {
+      console.log('Received notification:', notificationData)
 
       const isCurrentChannel = notificationData.channel === activeChannelId
       const isFromSelf = notificationData.username === user.username
 
-      // Don't show notifications for messages from the current user
       if (isFromSelf) {
         console.log('Skipping notification - message from self')
         return
       }
 
-      // Show notification for messages in OTHER channels (not current channel)
-      // This way users get notified about activity in channels they're not currently viewing
       if (!isCurrentChannel) {
         console.log('Showing cross-channel notification')
         setNotification({
-          title: notificationData.title, // Already formatted with channel name
+          title: notificationData.title,
           message: notificationData.message,
-          channelId: notificationData.channel, // Use for navigation
-          channelName: notificationData.channelName, // Use for display
+          channelId: notificationData.channel,
+          channelName: notificationData.channelName,
         })
       }
-    })
+    }
 
-    // Handle users joining and leaving
-    socket.on('users_list', (users) => {
+    const onUsersList = (users) => {
       setConnectedUsers(users)
-    })
+    }
 
-    // Handle users typing
-    socket.on('user_typing', (data) => {
-      // Only show typing indicators for the current channel
+    const onUserTyping = (data) => {
       if (data.channel === activeChannelId) {
         setTypingUsers((prev) => {
           const newSet = new Set(prev)
@@ -178,22 +176,30 @@ function ChatPage () {
           return newSet
         })
       }
-    })
+    }
+
+    // Attach listeners
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
+    socket.on('receive_message', onReceiveMessage)
+    socket.on('message_sent', onMessageSent)
+    socket.on('channel_joined', onChannelJoined)
+    socket.on('message_notification', onMessageNotification)
+    socket.on('users_list', onUsersList)
+    socket.on('user_typing', onUserTyping)
 
     // Cleanup
     return () => {
-      socket.off('connect')
-      socket.off('disconnect')
-      socket.off('receive_message')
-      socket.off('message_sent')
-      socket.off('channel_joined')
-      socket.off('message_notification')
-      socket.off('user_joined')
-      socket.off('user_left')
-      socket.off('users_list')
-      socket.off('user_typing')
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+      socket.off('receive_message', onReceiveMessage)
+      socket.off('message_sent', onMessageSent)
+      socket.off('channel_joined', onChannelJoined)
+      socket.off('message_notification', onMessageNotification)
+      socket.off('users_list', onUsersList)
+      socket.off('user_typing', onUserTyping)
     }
-  }, [socket, user, socketConnected, activeChannel, activeChannelId, appendNewMessage])
+  }, [socket, user, socketConnected, activeChannelId, appendNewMessage, activeChannel]) // Add activeChannelId to dependencies
 
   // Effect to scroll to bottom when messages change
   useEffect(() => {

@@ -1,361 +1,186 @@
-import express from "express";
-import { PrismaClient } from "@prisma/client";
-import authRoutes from "./routes/auth.js";
-import userRoutes from "./routes/user.js";
-import cors from "cors";
+import express from 'express'
+import { PrismaClient } from '@prisma/client'
+import authRoutes from './routes/auth.js'
+import userRoutes from './routes/user.js'
+import cors from 'cors'
+import { handleUserJoin } from './socket-handlers/userJoin.js'
+import { handleJoinChannel } from './socket-handlers/joinChannel.js'
+import { handleSendMessage } from './socket-handlers/sendMessage.js'
+import { handleTypingEvents } from './socket-handlers/typingEvents.js'
+import { handleDisconnect } from './socket-handlers/disconnect.js'
+import {
+  validateUserData,
+  validateMessageData,
+  validateChannelData,
+  emitError,
+  logSocketEvent,
+  validateSocketConnection,
+} from './socket-handlers/socketUtils.js'
 
 // Create Express app factory
 export const createApp = () => {
-  const app = express();
-  const prisma = new PrismaClient();
+  const app = express()
+  const prisma = new PrismaClient()
 
   app.use(
     cors({
-      origin: process.env.PUBLIC_URL || "http://localhost:5173",
+      origin: process.env.PUBLIC_URL || 'http://localhost:5173',
       credentials: true,
     })
-  );
+  )
 
-  app.use(express.json());
-  app.use("/api/auth", authRoutes);
-  app.use("/api/user", userRoutes);
+  app.use(express.json())
+  app.use('/api/auth', authRoutes)
+  app.use('/api/user', userRoutes)
 
   // Basic Express route
-  app.get("/", (req, res) => {
-    res.json({ message: "Server is running!" });
-  });
+  app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' })
+  })
 
   // Health check endpoint
-  app.get("/health", async (req, res) => {
+  app.get('/health', async (req, res) => {
     try {
-      await prisma.$queryRaw`SELECT NOW()`;
-      res.json({ status: "healthy", database: "connected" });
+      await prisma.$queryRaw`SELECT NOW()`
+      res.json({ status: 'healthy', database: 'connected' })
     } catch (error) {
-      res.status(500).json({ status: "unhealthy", error: error.message });
+      res.status(500).json({ status: 'unhealthy', error: error.message })
     }
-  });
+  })
 
   // Return both app and prisma
-  return { app, prisma };
-};
+  return { app, prisma }
+}
 
-// Store connected users by userId to prevent duplicates
-const connectedUsers = new Map();
-const usersByUserId = new Map();
+const connectedUsers = new Map() // Store connected users by socket.id for quick lookup
+const usersByUserId = new Map() // Map userId to socket.id to enforce one active connection per user
 
-// Helper function to get channel name by ID
-const getChannelName = async (prisma, channelId) => {
-  try {
-    const channel = await prisma.channel.findUnique({
-      where: { id: channelId },
-      select: { name: true },
-    });
-    return channel?.name || channelId; // Fallback to ID if name not found
-  } catch (error) {
-    console.error("Error fetching channel name:", error);
-    return channelId; // Fallback to ID on error
+// Utility function to get unique users list
+export const getUniqueUsers = () => {
+  return Array.from(usersByUserId.keys())
+    .map((userId) => {
+      const socketId = usersByUserId.get(userId)
+      return connectedUsers.get(socketId)
+    })
+    .filter(Boolean) // Filter out null/undefined
+}
+
+// Socket.io connection handler with enhanced error handling
+export const handleSocketConnection = (socket) => {
+  logSocketEvent('connection_established', socket.id)
+
+  // Wrap each event handler with error handling
+  const withErrorHandling = (eventName, handler) => {
+    return async (...args) => {
+      try {
+        await handler(...args)
+      } catch (error) {
+        emitError(socket, eventName, error)
+        logSocketEvent(`error_in_${eventName}`, socket.id, null, { error: error.message })
+      }
+    }
   }
-};
 
-// Socket.io connection handler
-export const handleSocketConnection = (socket, io, prisma) => {
-  // Handle user joining
-  socket.on("user_join", async (userData) => {
-    const existingSocketId = usersByUserId.get(userData.userId);
-    if (existingSocketId && existingSocketId !== socket.id) {
-      const existingSocket = io.sockets.sockets.get(existingSocketId);
-      if (existingSocket) {
-        existingSocket.disconnect(true);
-      }
-      connectedUsers.delete(existingSocketId);
-      usersByUserId.delete(userData.userId);
+  // ---------- Handle user joining ----------
+  socket.on('user_join', withErrorHandling('user_join', (userData) => {
+    // Validate required userData
+    const validation = validateUserData(userData)
+    if (!validation.isValid) {
+      throw new Error(`Invalid user data: ${validation.errors.join(', ')}`)
     }
 
-    const user = {
-      id: socket.id,
-      username: userData.username,
-      userId: userData.userId,
-      currentChannel: userData.channel,
-    };
+    handleUserJoin(
+      socket,
+      userData,
+      connectedUsers,
+      usersByUserId,
+      getUniqueUsers
+    )
+  }))
 
-    connectedUsers.set(socket.id, user);
-    usersByUserId.set(userData.userId, socket.id);
-
-    let actualChannelId = user.currentChannel;
-    let channelName = "general"; // Default channel name
-
-    // If the current channel is "general" (string), find the actual ID
-    if (user.currentChannel === "general") {
-      try {
-        const generalChannel = await prisma.channel.findFirst({
-          where: { name: "general" },
-          select: { id: true, name: true },
-        });
-        if (generalChannel) {
-          actualChannelId = generalChannel.id;
-          channelName = generalChannel.name;
-        } else {
-          console.warn(
-            "Default 'general' channel not found in DB. Please ensure it's seeded."
-          );
-        }
-      } catch (error) {
-        console.error("Error fetching general channel ID:", error);
-      }
-    } else {
-      // If it's already an ID, get the channel name
-      channelName = await getChannelName(prisma, user.currentChannel);
+  // ---------- Handle channel switching ----------
+  socket.on('join_channel', withErrorHandling('join_channel', (channelData) => {
+    // Validate channel data
+    const validation = validateChannelData(channelData)
+    if (!validation.isValid) {
+      throw new Error(`Invalid channel data: ${validation.errors.join(', ')}`)
     }
 
-    user.currentChannel = actualChannelId; // Store the ID internally
-    user.currentChannelName = channelName; // Store the name for display
-
-    // Join the channel room
-    socket.join(user.currentChannel);
-    console.log(
-      `${userData.username} joined room: #${channelName} (ID #${actualChannelId})`
-    );
-
-    const uniqueUsers = Array.from(usersByUserId.keys())
-      .map((userId) => {
-        const socketId = usersByUserId.get(userId);
-        return connectedUsers.get(socketId);
-      })
-      .filter(Boolean);
-
-    socket.emit("users_list", uniqueUsers);
-    io.emit("users_list", uniqueUsers); // Emit to all connected sockets
-
-    console.log(`${userData.username} joined the chat`);
-  });
-
-  // Handle channel switching
-  socket.on("join_channel", async (channelData) => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      const previousChannelId = user.currentChannel;
-      const previousChannelName = user.currentChannelName;
-      const newChannelId = channelData.channel;
-
-      // Get the new channel name
-      const newChannelName = await getChannelName(prisma, newChannelId);
-
-      // Leave the previous channel room
-      if (previousChannelId) {
-        socket.leave(previousChannelId);
-        console.log(
-          `${user.username} left room: #${previousChannelName} (${previousChannelId})`
-        );
-      }
-
-      // Join the new channel room
-      socket.join(newChannelId);
-      user.currentChannel = newChannelId;
-      user.currentChannelName = newChannelName;
-
-      console.log(
-        `${user.username} joined room: #${newChannelName} (${newChannelId})`
-      );
-
-      // Send a confirmation back to the client
-      socket.emit("channel_joined", {
-        channel: newChannelId,
-        channelName: newChannelName,
-        previousChannel: previousChannelId,
-        previousChannelName: previousChannelName,
-      });
+    // Check if user exists in connected users
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
     }
-  });
 
-  // Handle new chat messages
-  socket.on("send_message", async (messageData) => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      const channelId = messageData.channel || user.currentChannel;
-      const { text } = messageData;
+    handleJoinChannel(socket, channelData, connectedUsers)
+  }))
 
-      if (!channelId || !text || !user.userId) {
-        console.error("Missing data for message:", {
-          channelId,
-          text,
-          userId: user.userId,
-        });
-        return;
-      }
-
-      try {
-        // Get channel name for display purposes
-        const channelName = await getChannelName(prisma, channelId);
-
-        // Persist the message to the database
-        const newMessage = await prisma.message.create({
-          data: {
-            content: text,
-            channelId: channelId,
-            userId: user.userId,
-          },
-          include: {
-            user: {
-              select: {
-                username: true,
-              },
-            },
-          },
-        });
-
-        // Format the persisted message to send to clients
-        const formattedMessage = {
-          id: newMessage.id,
-          text: newMessage.content,
-          username: newMessage.user.username,
-          userId: newMessage.userId,
-          timestamp: newMessage.createdAt.toISOString(),
-          channel: channelId, // Include channel ID for client routing
-          channelName: channelName, // Include channel name for display
-          isSystem: false,
-        };
-
-        // Emit the message to all users in the channel room
-        io.to(channelId).emit("receive_message", formattedMessage);
-
-        // Send notification to users who are members of this channel but not currently viewing it
-        try {
-          // Get all members of this channel from the database
-          const channelMembers = await prisma.channelMember.findMany({
-            where: { channelId: channelId },
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  username: true,
-                },
-              },
-            },
-          });
-
-          // Get all currently connected users
-          const allConnectedUsers = Array.from(connectedUsers.values());
-
-          // Filter for users who:
-          // 1. Are members of this channel
-          // 2. Are currently connected
-          // 3. Are NOT currently viewing this channel
-          // 4. Are NOT the message sender
-          const usersToNotify = allConnectedUsers.filter((connectedUser) => {
-            // Check if user is a member of this channel
-            const isMember = channelMembers.some(
-              (member) => member.user.id === connectedUser.userId
-            );
-
-            // Check if user is not currently viewing this channel
-            const isNotInCurrentChannel =
-              connectedUser.currentChannel !== channelId;
-
-            // Check if user is not the sender
-            const isNotSender = connectedUser.id !== socket.id;
-
-            return isMember && isNotInCurrentChannel && isNotSender;
-          });
-
-          // Send notifications to eligible users
-          usersToNotify.forEach((otherUser) => {
-            io.to(otherUser.id).emit("message_notification", {
-              title: `New message in #${channelName}`, // Use channel name for display
-              message: `${
-                formattedMessage.username
-              }: ${formattedMessage.text.substring(0, 50)}${
-                formattedMessage.text.length > 50 ? "..." : ""
-              }`,
-              channel: channelId, // Send channel ID for routing
-              channelName: channelName, // Send channel name for display
-              messageId: formattedMessage.id,
-              username: formattedMessage.username,
-            });
-          });
-
-          console.log(
-            `Sent notifications to ${usersToNotify.length} users for message in #${channelName}`
-          );
-        } catch (notificationError) {
-          console.error("Error sending notifications:", notificationError);
-          // Don't fail the entire message sending if notifications fail
-        }
-
-        console.log(
-          `Message from ${user.username} in #${channelName}: ${messageData.text}`
-        );
-      } catch (error) {
-        console.error("Error saving message to database:", error);
-        socket.emit("message_error", {
-          message: "Failed to send message: database error.",
-        });
-      }
-    } else {
-      console.warn(
-        "Attempted to send message from unconnected socket:",
-        socket.id
-      );
+  // ---------- Handle sending messages ----------
+  socket.on('send_message', withErrorHandling('send_message', (messageData) => {
+    // Validate message data
+    const validation = validateMessageData(messageData)
+    if (!validation.isValid) {
+      throw new Error(`Invalid message data: ${validation.errors.join(', ')}`)
     }
-  });
 
-  // Handle typing indicators
-  socket.on("typing_start", async (data) => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      const channelId = data?.channel || user.currentChannel;
-      const channelName = await getChannelName(prisma, channelId);
-
-      // Send typing indicator only to users in the same channel
-      socket.to(channelId).emit("user_typing", {
-        username: user.username,
-        channel: channelId,
-        channelName: channelName,
-        isTyping: true,
-      });
+    // Check if user exists in connected users
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
     }
-  });
 
-  socket.on("typing_stop", async (data) => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      const channelId = data?.channel || user.currentChannel;
-      const channelName = await getChannelName(prisma, channelId);
+    handleSendMessage(socket, messageData, connectedUsers)
+  }))
 
-      // Send typing stop only to users in the same channel
-      socket.to(channelId).emit("user_typing", {
-        username: user.username,
-        channel: channelId,
-        channelName: channelName,
-        isTyping: false,
-      });
+  // ---------- Handle typing events ----------
+  socket.on('typing_start', withErrorHandling('typing_start', (data) => {
+    // Check if user exists in connected users
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
     }
-  });
 
-  // Handle disconnect
-  socket.on("disconnect", () => {
-    const user = connectedUsers.get(socket.id);
-    if (user) {
-      if (user.currentChannel) {
-        socket.leave(user.currentChannel);
-      }
+    handleTypingEvents.handleTypingStart(socket, data, connectedUsers)
+  }))
 
-      connectedUsers.delete(socket.id);
-      usersByUserId.delete(user.userId);
-
-      const uniqueUsers = Array.from(usersByUserId.keys())
-        .map((userId) => {
-          const socketId = usersByUserId.get(userId);
-          return connectedUsers.get(socketId);
-        })
-        .filter(Boolean);
-
-      socket.broadcast.emit("users_list", uniqueUsers);
-
-      console.log(
-        `${user.username} disconnected from room: ${user.currentChannel}`
-      );
-    } else {
-      console.log("User disconnected:", socket.id);
+  socket.on('typing_stop', withErrorHandling('typing_stop', (data) => {
+    // Check if user exists in connected users
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
     }
-  });
-};
+
+    handleTypingEvents.handleTypingStop(socket, data, connectedUsers)
+  }))
+
+  // ---------- Handle user disconnecting ----------
+  socket.on('disconnect', withErrorHandling('disconnect', (reason) => {
+    logSocketEvent('disconnect', socket.id, null, { reason })
+
+    handleDisconnect(
+      socket,
+      connectedUsers,
+      usersByUserId,
+      getUniqueUsers
+    )
+  }))
+
+  // ---------- Handle connection errors ----------
+  socket.on('connect_error', (error) => {
+    logSocketEvent('connect_error', socket.id, null, { error: error.message })
+    emitError(socket, 'connection', error)
+  })
+
+  // ---------- Handle socket errors ----------
+  socket.on('error', (error) => {
+    logSocketEvent('socket_error', socket.id, null, { error: error.message })
+    emitError(socket, 'socket', error)
+  })
+
+  // Send initial connection success message
+  socket.emit('connection_established', {
+    socketId: socket.id,
+    timestamp: new Date().toISOString(),
+    message: 'Successfully connected to the server'
+  })
+}
