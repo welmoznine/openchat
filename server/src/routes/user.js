@@ -37,26 +37,34 @@ router.get('/channels', async (req, res) => {
   try {
     console.log('User /channels endpoint hit, user:', req.user)
 
-    // Getting all public user channels, and also any private channels they are a member of
     const channels = await prisma.channel.findMany({
       where: {
-        OR: [
-          { isPrivate: false }, // Public channels
-          {
-            AND: [
-              { isPrivate: true },
-              {
-                members: {
-                  some: { userId: req.user.id }, // Private channels the user is in
-                },
+        members: {
+          some: { userId: req.user.id }, // User must be a member of the channel
+        },
+      },
+      include: {
+        members: {
+          select: {
+            userId: true,
+            user: {
+              select: {
+                username: true,
               },
-            ],
+            },
           },
-        ],
+        },
+        _count: {
+          select: {
+            members: true,
+          },
+        },
       },
     })
 
-    console.log(`Found ${channels.length} accessible channels for user ${req.user.id}`)
+    console.log(
+      `Found ${channels.length} accessible channels for user ${req.user.id}`
+    )
     res.json(channels)
   } catch (error) {
     console.error('Error in /channels:', error)
@@ -77,33 +85,98 @@ router.post('/channels', async (req, res) => {
     }
 
     if (description && description.length > 255) {
-      return res.status(400).json({ error: 'Description exceeds 255 characters' })
+      return res
+        .status(400)
+        .json({ error: 'Description exceeds 255 characters' })
     }
 
     const newChannel = await prisma.channel.create({
-
       data: {
         name,
         description,
-        isPrivate
+        isPrivate,
       },
-
     })
 
-    // If it is a private channel adding creator as member
-    if (isPrivate) {
-      await prisma.channelMember.create({
-        data: {
-          userId,
-          channelId: newChannel.id
-        }
-      })
-    }
+    // Always add creator as member (for both public and private channels)
+    await prisma.channelMember.create({
+      data: {
+        userId,
+        channelId: newChannel.id,
+      },
+    })
 
     return res.status(201).json(newChannel)
   } catch (error) {
     console.error('Failed to create channel: ', error)
     return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Get message history for a specific channel by channel ID
+router.get('/channels/:channelId/messages', async (req, res) => {
+  try {
+    const { channelId } = req.params
+    const { limit = 50, before } = req.query
+
+    // Verify user is a member of this channel
+    const membership = await prisma.channelMember.findUnique({
+      where: {
+        userId_channelId: {
+          userId: req.user.id,
+          channelId,
+        },
+      },
+    })
+    console.log(
+      `User ${req.user.id} membership in channel ${channelId}:`,
+      membership
+    )
+
+    if (!membership) {
+      return res.status(403).json({ error: 'Not a member of this channel' })
+    }
+
+    // Build query conditions
+    const whereConditions = { channelId }
+    if (before) {
+      whereConditions.createdAt = { lt: new Date(before) }
+    }
+
+    const messages = await prisma.message.findMany({
+      where: whereConditions,
+      orderBy: { createdAt: 'desc' },
+      take: parseInt(limit),
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+        mentionedUser: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    })
+
+    // Reverse to get chronological order (oldest first)
+    const formattedMessages = messages.reverse().map((msg) => ({
+      id: msg.id,
+      text: msg.content,
+      username: msg.user.username,
+      userId: msg.userId,
+      timestamp: msg.createdAt.toISOString(),
+      mentionedUser: msg.mentionedUser,
+    }))
+
+    res.json(formattedMessages)
+  } catch (error) {
+    console.error('Error fetching channel messages:', error)
+    res.status(500).json({ error: 'Failed to fetch messages' })
   }
 })
 

@@ -6,6 +6,7 @@ import { useUser } from '../contexts/UserContext'
 import { useLogout } from '../hooks/auth/useLogout'
 import { useSocket } from '../hooks/useSocket'
 import { useUserChannels } from '../hooks/useUserChannels'
+import { useChannelMessages } from '../hooks/useChannelMessages'
 
 // Import components
 import Message from '../components/chat/Message'
@@ -16,6 +17,14 @@ import Notification from '../components/chat/Notification'
 import SettingsMenu from '../components/SettingsMenu'
 
 function ChatPage () {
+  // State variables
+  const [currentMessage, setCurrentMessage] = useState('') // Current message input
+  const [connectedUsers, setConnectedUsers] = useState([]) // Array of connected users
+  const [typingUsers, setTypingUsers] = useState(new Set()) // Users currently typing
+  const [notification, setNotification] = useState(null) // Notification state
+  const [activeChannelId, setActiveChannelId] = useState(null)
+  const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
+
   // Hooks
   const user = useUser() // Get user from context
   const logout = useLogout() // Get logout function
@@ -24,31 +33,47 @@ function ChatPage () {
     channels,
     loading: channelsLoading,
     error: channelsError,
-    refreshChannels
-  } = useUserChannels()
-
-  // State variables
-  const [messagesByChannel, setMessagesByChannel] = useState({}) // Messages organized by channel
-  const [currentMessage, setCurrentMessage] = useState('') // Current message input
-  const [connectedUsers, setConnectedUsers] = useState([]) // Array of connected users
-  const [typingUsers, setTypingUsers] = useState(new Set()) // Users currently typing
-  const [notification, setNotification] = useState(null) // Notification state
-  const [activeChannel, setActiveChannel] = useState('general') // Active channel state, default to "general"
-  const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
+    refreshChannels,
+  } = useUserChannels() // Custom hook for channels
+  const {
+    messages,
+    loading: msgLoading,
+    error: msgError,
+    appendNewMessage,
+  } = useChannelMessages(activeChannelId) // Custom hook for messages in the active channel
 
   // Refs
   const messagesEndRef = useRef(null) // Ref for auto-scrolling to bottom of messages
   const typingTimeoutRef = useRef(null) // Ref for typing indicator timeout
+
+  // Get the active channel
+  const activeChannel = useMemo(() => {
+    return channels.find((c) => c.id === activeChannelId) || null
+  }, [channels, activeChannelId])
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  // Get messages for the current channel
-  const currentChannelMessages = useMemo(() => {
-    return messagesByChannel[activeChannel] || []
-  }, [messagesByChannel, activeChannel])
+  // Effect to auto-select the general channel when channels are loaded
+  useEffect(() => {
+    if (channels.length > 0 && !activeChannelId) {
+      // Find the general channel by name
+      const generalChannel = channels.find((c) => c.name === 'general')
+      if (generalChannel) {
+        console.log('Auto-selecting general channel:', generalChannel.id)
+        setActiveChannelId(generalChannel.id)
+      } else {
+        // If no general channel exists, select the first available channel
+        console.log(
+          'No general channel found, selecting first available channel:',
+          channels[0].id
+        )
+        setActiveChannelId(channels[0].id)
+      }
+    }
+  }, [channels, activeChannelId])
 
   // Effect to handle socket events
   useEffect(() => {
@@ -71,7 +96,7 @@ function ChatPage () {
       socket.emit('user_join', {
         username: user.username,
         userId: user.id,
-        channel: activeChannel, // Include current channel
+        channel: activeChannelId, // Include current channel
       })
     }
 
@@ -82,7 +107,7 @@ function ChatPage () {
       socket.emit('user_join', {
         username: user.username,
         userId: user.id,
-        channel: activeChannel,
+        channel: activeChannelId, // Include current channel
       })
     })
 
@@ -91,17 +116,15 @@ function ChatPage () {
     })
 
     socket.on('receive_message', (message) => {
-      setMessagesByChannel((prev) => ({
-        ...prev,
-        [message.channel]: [...(prev[message.channel] || []), message],
-      }))
+      if (message.channel === activeChannelId) {
+        appendNewMessage(message)
+      }
     })
 
     socket.on('message_sent', (message) => {
-      setMessagesByChannel((prev) => ({
-        ...prev,
-        [message.channel]: [...(prev[message.channel] || []), message],
-      }))
+      if (message.channel === activeChannelId) {
+        appendNewMessage(message)
+      }
     })
 
     socket.on('channel_joined', (data) => {
@@ -114,7 +137,7 @@ function ChatPage () {
     socket.on('message_notification', (notificationData) => {
       console.log('Received notification:', notificationData) // Debug log
 
-      const isCurrentChannel = notificationData.channel === activeChannel
+      const isCurrentChannel = notificationData.channel === activeChannelId
       const isFromSelf = notificationData.username === user.username
 
       // Don't show notifications for messages from the current user
@@ -128,8 +151,10 @@ function ChatPage () {
       if (!isCurrentChannel) {
         console.log('Showing cross-channel notification')
         setNotification({
-          title: `New message in #${notificationData.channel}`,
+          title: notificationData.title, // Already formatted with channel name
           message: notificationData.message,
+          channelId: notificationData.channel, // Use for navigation
+          channelName: notificationData.channelName, // Use for display
         })
       }
     })
@@ -142,7 +167,7 @@ function ChatPage () {
     // Handle users typing
     socket.on('user_typing', (data) => {
       // Only show typing indicators for the current channel
-      if (data.channel === activeChannel) {
+      if (data.channel === activeChannelId) {
         setTypingUsers((prev) => {
           const newSet = new Set(prev)
           if (data.isTyping) {
@@ -168,12 +193,12 @@ function ChatPage () {
       socket.off('users_list')
       socket.off('user_typing')
     }
-  }, [socket, user, socketConnected, activeChannel])
+  }, [socket, user, socketConnected, activeChannel, activeChannelId, appendNewMessage])
 
   // Effect to scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom()
-  }, [currentChannelMessages])
+  }, [messages])
 
   // Effect to auto-dismiss notification after 10 seconds
   useEffect(() => {
@@ -191,11 +216,11 @@ function ChatPage () {
 
     socket.emit('send_message', {
       text: messageText.trim(),
-      channel: activeChannel, // Include the current channel
+      channel: activeChannelId, // Include the current channel
     })
     setCurrentMessage('') // Clear input after sending
     // Stop typing indicator
-    socket.emit('typing_stop', { channel: activeChannel })
+    socket.emit('typing_stop', { channel: activeChannelId })
   }
 
   const handleInputChange = (text) => {
@@ -204,7 +229,7 @@ function ChatPage () {
     if (!socket) return
 
     // Handle typing indicators
-    socket.emit('typing_start', { channel: activeChannel })
+    socket.emit('typing_start', { channel: activeChannelId })
 
     // Clear existing timeout
     if (typingTimeoutRef.current) {
@@ -213,7 +238,7 @@ function ChatPage () {
 
     // Set new timeout to stop typing indicator
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typing_stop', { channel: activeChannel })
+      socket.emit('typing_stop', { channel: activeChannelId })
     }, 1000)
   }
 
@@ -271,7 +296,7 @@ function ChatPage () {
     status: 'online',
   }))
 
-  const formattedMessages = currentChannelMessages.map((message) => ({
+  const formattedMessages = messages.map((message) => ({
     id: message.id,
     user: {
       name: message.username,
@@ -286,18 +311,18 @@ function ChatPage () {
     isOwn: message.username === user?.username,
   }))
 
-  const handleChannelSelect = (channelName) => {
-    console.log('Switching from', activeChannel, 'to', channelName)
+  const handleChannelSelect = (channelId) => {
+    console.log('Switching from', activeChannelId, 'to', channelId)
 
     // Clear typing indicators when switching channels
     setTypingUsers(new Set())
 
     // Update active channel
-    setActiveChannel(channelName)
+    setActiveChannelId(channelId)
 
     // Notify the server about channel switch
     if (socket) {
-      socket.emit('join_channel', { channel: channelName })
+      socket.emit('join_channel', { channel: channelId })
     }
   }
 
@@ -318,7 +343,7 @@ function ChatPage () {
   }
 
   const toggleSidebar = () => {
-    setShowSidebar(prev => !prev)
+    setShowSidebar((prev) => !prev)
   }
 
   // Add loading state check
@@ -345,14 +370,33 @@ function ChatPage () {
     )
   }
 
+  if (msgLoading) {
+    return (
+      <div className='h-screen flex items-center justify-center bg-slate-800 text-white'>
+        <div>Loading messages...</div>
+      </div>
+    )
+  }
+  if (msgError) {
+    return (
+      <div className='h-screen flex items-center justify-center bg-slate-800 text-red-500'>
+        <div>Error loading messages: {msgError}</div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className='h-full w-full bg-slate-800 text-white md:h-screen md:flex relative'>
-        <div className={`${showSidebar ? 'fixed left-0' : 'hidden'} top-0 bottom-0 w-64 bg-slate-900 z-50 md:static md:flex md:w-64`}>
+        <div
+          className={`${
+            showSidebar ? 'fixed left-0' : 'hidden'
+          } top-0 bottom-0 w-64 bg-slate-900 z-50 md:static md:flex md:w-64`}
+        >
           <Sidebar
             currentUser={currentUserData}
             channels={channels}
-            activeChannel={activeChannel}
+            activeChannel={activeChannel?.id || null}
             onChannelSelect={handleChannelSelect}
             directMessages={directMessages}
             onDirectMessageSelect={handleDirectMessageSelect}
@@ -367,11 +411,8 @@ function ChatPage () {
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>
           <ChatHeader
-            channelName={activeChannel}
-            // Look up the channel description from channels array based on activeChannel
-            description={
-              channels.find((c) => c.name === activeChannel)?.description || ''
-            }
+            channelName={activeChannel?.name || 'general'}
+            description={activeChannel?.description || ''}
             isConnected={socketConnected}
             toggleSidebar={toggleSidebar}
           />
@@ -408,7 +449,7 @@ function ChatPage () {
             onSendMessage={handleSendMessage}
             onInputChange={handleInputChange}
             isConnected={socketConnected}
-            placeholder={`Message #${activeChannel}`}
+            placeholder={`Message #${activeChannel?.name || 'general'}`}
           />
         </div>
 
