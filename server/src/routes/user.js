@@ -8,6 +8,7 @@ const router = Router()
 // Apply authentication middleware to all routes in this router
 router.use(authenticateToken)
 
+// Get the authenticated user's profile from the JWT token
 router.get('/me', async (req, res) => {
   try {
     console.log('User /me endpoint hit, user:', req.user)
@@ -32,33 +33,26 @@ router.get('/me', async (req, res) => {
   }
 })
 
-// Get all channels that the authenticated user is a member of
+// Get all public channels, and also any private channels the user is a member of
 router.get('/channels', async (req, res) => {
   try {
     console.log('User /channels endpoint hit, user:', req.user)
 
     const channels = await prisma.channel.findMany({
       where: {
-        members: {
-          some: { userId: req.user.id }, // User must be a member of the channel
-        },
-      },
-      include: {
-        members: {
-          select: {
-            userId: true,
-            user: {
-              select: {
-                username: true,
+        OR: [
+          { isPrivate: false },
+          {
+            AND: [
+              { isPrivate: true },
+              {
+                members: {
+                  some: { userId: req.user.id },
+                },
               },
-            },
+            ],
           },
-        },
-        _count: {
-          select: {
-            members: true,
-          },
-        },
+        ],
       },
     })
 
@@ -72,6 +66,7 @@ router.get('/channels', async (req, res) => {
   }
 })
 
+// Create a new channel
 router.post('/channels', async (req, res) => {
   try {
     const { name, description, isPrivate } = req.body
@@ -98,12 +93,33 @@ router.post('/channels', async (req, res) => {
       },
     })
 
-    // Always add creator as member (for both public and private channels)
-    await prisma.channelMember.create({
-      data: {
-        userId,
-        channelId: newChannel.id,
-      },
+    // Prepare channel member data
+    const channelMembersToCreate = [{
+      userId,
+      channelId: newChannel.id,
+    }]
+
+    // If the channel is public, add all existing users as members
+    if (!isPrivate) {
+      const allUsers = await prisma.user.findMany({
+        select: { id: true },
+      })
+
+      // Add all users (not including the creator, who is already added)
+      allUsers.forEach(user => {
+        if (user.id !== userId) {
+          channelMembersToCreate.push({
+            userId: user.id,
+            channelId: newChannel.id,
+          })
+        }
+      })
+    }
+
+    // Insert all members into the database
+    await prisma.channelMember.createMany({
+      data: channelMembersToCreate,
+      skipDuplicates: true, // In case the creator is somehow duplicated, skip it
     })
 
     return res.status(201).json(newChannel)
@@ -129,6 +145,7 @@ router.get('/channels/:channelId/messages', async (req, res) => {
       },
     })
 
+    // If not a member, return 403 Forbidden
     if (!membership) {
       return res.status(403).json({ error: 'Not a member of this channel' })
     }
