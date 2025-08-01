@@ -3,7 +3,7 @@ import { Server as SocketServer } from 'socket.io'
 import { createApp, handleSocketConnection } from './app.js'
 
 // Destructure app and prisma from createApp
-const { app, prisma } = createApp() 
+const { app, prisma } = createApp()
 
 // Set up Socket.io server with CORS
 const server = createServer(app)

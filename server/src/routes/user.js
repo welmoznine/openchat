@@ -63,7 +63,7 @@ router.get('/channels', async (req, res) => {
     })
 
     console.log(
-      `Found ${channels.length} accessible channels for user ${req.user.id}`
+      `Found ${channels.length} accessible channels for ${req.user.username} (ID ${req.user.id})`
     )
     res.json(channels)
   } catch (error) {
@@ -128,10 +128,6 @@ router.get('/channels/:channelId/messages', async (req, res) => {
         },
       },
     })
-    console.log(
-      `User ${req.user.id} membership in channel ${channelId}:`,
-      membership
-    )
 
     if (!membership) {
       return res.status(403).json({ error: 'Not a member of this channel' })
