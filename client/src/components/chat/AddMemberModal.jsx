@@ -29,7 +29,7 @@ export default function AddMemberModal ({ channel, showAddMember, setShowAddMemb
         <form onSubmit={onSubmit}>
           <div className='text-gray-300' />
           <label className='block text-sm font-medium mt-5 mb-1' htmlFor='channel-name'>
-            Who would you like to add to this channel?
+            Please enter their username:
           </label>
           <input
             id='channel-description'
