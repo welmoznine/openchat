@@ -17,7 +17,7 @@ const Sidebar = ({
   onLogout,
   isConnected,
   toggleSidebar,
-  onChannelAdded
+  onChannelUpdate
 }) => {
   const [showAddChannel, setShowAddChannel] = useState(false)
 
@@ -41,7 +41,7 @@ const Sidebar = ({
                 <path strokeLinecap='round' strokeLinejoin='round' d='M12 4.5v15m7.5-7.5h-15' />
               </svg>
             </div>
-            {showAddChannel && <AddChannelModal showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} onChannelAdded={onChannelAdded} />}
+            {showAddChannel && <AddChannelModal showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} onChannelUpdate={onChannelUpdate} />}
           </div>
           <div />
           <div className='space-y-1'>
@@ -53,6 +53,7 @@ const Sidebar = ({
                 isActive={activeChannel === channel.id}
                 isPrivate={channel.isPrivate}
                 unreadCount={channel.unreadCount}
+                onChannelUpdate={onChannelUpdate}
                 onClick={() => onChannelSelect(channel.id)}
               />
             ))}

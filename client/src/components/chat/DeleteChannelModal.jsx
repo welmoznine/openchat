@@ -1,11 +1,19 @@
-import { useEffect } from 'react'
+import { useDeleteChannel } from '../../hooks/channels/useDeleteChannel'
 
-export default function DeleteChannelModal ({ channel, showDeleteChannel, setShowDeleteChannel }) {
+export default function DeleteChannelModal ({ channel, showDeleteChannel, setShowDeleteChannel, onChannelUpdate }) {
+  // Custom hook to delete a new channel
+  const { deleteChannel } = useDeleteChannel()
+
   if (!showDeleteChannel) return null
 
   const onSubmit = (e) => {
     e.preventDefault()
     console.log(channel.id)
+
+    deleteChannel(channel.id).then(() => {
+      setShowDeleteChannel(false)
+      onChannelUpdate()
+    })
   }
 
   return (
