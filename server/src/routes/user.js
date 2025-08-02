@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { authenticateToken } from '../middleware/auth.js'
+import { getIO } from '../socket-handlers/socket.js'
 
 const prisma = new PrismaClient()
 const router = Router()
@@ -71,6 +72,8 @@ router.get('/channels', async (req, res) => {
 
 // Create a new channel
 router.post('/channels', async (req, res) => {
+  const io = getIO()
+
   try {
     const { name, description, isPrivate } = req.body
 
@@ -125,6 +128,7 @@ router.post('/channels', async (req, res) => {
       skipDuplicates: true, // In case the creator is somehow duplicated, skip it
     })
 
+    io.emit('channel_refresh')
     return res.status(201).json(newChannel)
   } catch (error) {
     console.error('Failed to create channel: ', error)
@@ -134,9 +138,8 @@ router.post('/channels', async (req, res) => {
 
 // Delete a channel
 router.delete('/channels/:id', async (req, res) => {
+  const io = getIO()
   const { id } = req.params
-
-  console.log(id)
 
   try {
     // Check if existing channel
@@ -154,6 +157,7 @@ router.delete('/channels/:id', async (req, res) => {
       where: { id },
     })
 
+    io.emit('channel_refresh')
     return res.status(200).json({ message: 'Channel deleted successfully' })
   } catch (error) {
     console.error()
@@ -225,7 +229,9 @@ router.get('/channels/:channelId/messages', async (req, res) => {
   }
 })
 
+// Add member to channel
 router.post('/channels/:channelId/members', async (req, res) => {
+  const io = getIO()
   const { channelId } = req.params
   const { username } = req.body
 
@@ -272,6 +278,9 @@ router.post('/channels/:channelId/members', async (req, res) => {
         channelId,
       },
     })
+
+    // TODO: This really only needs to go to the user who was added
+    io.emit('channel_refresh')
 
     return res.status(201).json({ message: 'User added to channel', member: newMember })
   } catch (error) {

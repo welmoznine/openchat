@@ -63,7 +63,7 @@ function ChatPage () {
     setTypingUsers,
     notification,
     setNotification
-  } = useSocketEvents(socket, user, activeChannelId, socketConnected, appendNewMessage)
+  } = useSocketEvents(socket, user, activeChannelId, socketConnected, appendNewMessage, refreshChannels)
 
   // Message input management
   const {
