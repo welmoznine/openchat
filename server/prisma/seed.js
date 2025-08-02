@@ -78,14 +78,12 @@ async function main () {
   // Add users to channels based on the requirements
   await prisma.channelMember.createMany({
     data: [
-      // Add testuser@example.com (user1) to all three channels
       { userId: user1.id, channelId: generalChannel.id },
       { userId: user1.id, channelId: randomChannel.id },
       { userId: user1.id, channelId: devChannel.id },
-
-      // Add testuser2@example.com (user2) to only general and random channels
       { userId: user2.id, channelId: generalChannel.id },
       { userId: user2.id, channelId: randomChannel.id },
+      { userId: user2.id, channelId: devChannel.id },
     ],
   })
 
