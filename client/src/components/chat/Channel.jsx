@@ -1,5 +1,5 @@
 // src/components/chat/Channel.jsx
-import { EllipsisHorizontalIcon, TrashIcon } from '@heroicons/react/24/outline'
+import { EllipsisHorizontalIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import { useState, useRef, useEffect } from 'react'
 
 const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }) => {
@@ -19,12 +19,12 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
 
   return (
     <>
-      <div className={`flex items-center justify-between group px-2 py-1 rounded cursor-pointer hover:bg-slate-700 ${
+      <div className={`flex items-center justify-between group  rounded cursor-pointer hover:bg-slate-700 ${
             isActive ? 'bg-slate-800 text-white font-semibold' : 'text-gray-300'
           }`}
       >
         <div
-          className='flex-1'
+          className='flex-1 px-2 py-1'
           onClick={onClick}
         >
           <div className='flex items-center space-x-2'>
@@ -38,7 +38,7 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
               </span>)}
           </div>
         </div>
-        <div className='flex' ref={channelmenuRef}>
+        <div className='flex pe-2' ref={channelmenuRef}>
           <EllipsisHorizontalIcon
             onClick={() => setShowChannelMenu((prev) => !prev)}
             className='h-6 w-6 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer'
@@ -53,7 +53,13 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
       <div>
         {showChannelMenu &&
           <div className='absolute right-2 w-40 rounded-md shadow-lg bg-slate-800 text-white ring-1 ring-slate-600 ring-opacity-5 z-50'>
-            <div className='py-1 text-sm text-gray-700'>
+            <div className='py-1 text-sm'>
+              {isPrivate && (
+                <button className='flex px-4 py-2 w-full text-gray-300 hover:bg-slate-700 cursor-pointer'>
+                  <UserPlusIcon className='h-5 w-5' />
+                  <div className='ms-2'>Add Member</div>
+                </button>
+              )}
               <button className='flex block px-4 py-2 w-full text-left text-red-500 hover:bg-slate-700 cursor-pointer'>
                 <TrashIcon className='h-5 w-5' />
                 <div className='ms-2'>Delete</div>
