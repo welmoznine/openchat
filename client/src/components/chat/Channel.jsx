@@ -1,8 +1,10 @@
 // src/components/chat/Channel.jsx
+import { EllipsisVerticalIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/outline'
+
 const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }) => (
   <div
-    className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-slate-700 ${
-      isActive ? 'bg-slate-700 text-white' : 'text-gray-300'
+    className={`flex items-center justify-between group px-2 py-1 rounded cursor-pointer hover:bg-slate-700 ${
+      isActive ? 'bg-slate-800 text-white font-semibold' : 'text-gray-300'
     }`}
     onClick={onClick}
   >
@@ -16,11 +18,15 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
           </svg>
         </span>)}
     </div>
-    {unreadCount > 0 && (
-      <div className='bg-red-500 text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center text-white'>
-        {unreadCount}
-      </div>
-    )}
+    <div className="flex">
+      <EllipsisHorizontalIcon className="h-6 w-6 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer" />
+      {unreadCount > 0 && (
+        <div className='bg-red-500 text-xs px-1.5 py-0.5 rounded-full min-w-[1.25rem] text-center text-white'>
+          {unreadCount}
+        </div>
+      )}
+    </div>
+
   </div>
 )
 
