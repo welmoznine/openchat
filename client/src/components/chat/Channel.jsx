@@ -1,9 +1,11 @@
 // src/components/chat/Channel.jsx
 import { EllipsisHorizontalIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import { useState, useRef, useEffect } from 'react'
+import DeleteChannelModal from './DeleteChannelModal'
 
 const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }) => {
   const [showChannelMenu, setShowChannelMenu] = useState(false)
+  const [showDeleteChannel, setShowDeleteChannel] = useState(false)
   const channelmenuRef = useRef(null)
 
   useEffect(() => {
@@ -13,8 +15,8 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    document.addEventListener('click', handleClickOutside)
+    return () => document.removeEventListener('click', handleClickOutside)
   }, [])
 
   return (
@@ -40,7 +42,10 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
         </div>
         <div className='flex pe-2' ref={channelmenuRef}>
           <EllipsisHorizontalIcon
-            onClick={() => setShowChannelMenu((prev) => !prev)}
+            onMouseDown={(e) => {
+              e.stopPropagation() // Prevents bubbling to the document
+              setShowChannelMenu((prev) => !prev)
+            }}
             className='h-6 w-6 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer'
           />
           {unreadCount > 0 && (
@@ -48,25 +53,30 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
               {unreadCount}
             </div>
           )}
+          <div>
+            {showChannelMenu &&
+              <div className='absolute mt-4 right-2 w-40 rounded-md shadow-lg bg-slate-800 text-white ring-1 ring-slate-600 ring-opacity-5 z-50'>
+                <div className='py-1 text-sm'>
+                  {isPrivate && (
+                    <button className='flex px-4 py-2 w-full text-gray-300 hover:bg-slate-700 cursor-pointer'>
+                      <UserPlusIcon className='h-5 w-5' />
+                      <div className='ms-2'>Add Member</div>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowDeleteChannel(true)}
+                    className='flex block px-4 py-2 w-full text-left text-red-500 hover:bg-slate-700 cursor-pointer'
+                  >
+                    <TrashIcon className='h-5 w-5' />
+                    <div className='ms-2'>Delete</div>
+                  </button>
+
+                </div>
+              </div>}
+          </div>
         </div>
       </div>
-      <div>
-        {showChannelMenu &&
-          <div className='absolute right-2 w-40 rounded-md shadow-lg bg-slate-800 text-white ring-1 ring-slate-600 ring-opacity-5 z-50'>
-            <div className='py-1 text-sm'>
-              {isPrivate && (
-                <button className='flex px-4 py-2 w-full text-gray-300 hover:bg-slate-700 cursor-pointer'>
-                  <UserPlusIcon className='h-5 w-5' />
-                  <div className='ms-2'>Add Member</div>
-                </button>
-              )}
-              <button className='flex block px-4 py-2 w-full text-left text-red-500 hover:bg-slate-700 cursor-pointer'>
-                <TrashIcon className='h-5 w-5' />
-                <div className='ms-2'>Delete</div>
-              </button>
-            </div>
-          </div>}
-      </div>
+      {showDeleteChannel && <DeleteChannelModal showDeleteChannel={showDeleteChannel} setShowDeleteChannel={setShowDeleteChannel} />}
     </>
   )
 }
