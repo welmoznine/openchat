@@ -1,10 +1,12 @@
 // src/components/chat/Channel.jsx
 import { EllipsisHorizontalIcon, TrashIcon, UserPlusIcon } from '@heroicons/react/24/outline'
 import { useState, useRef, useEffect } from 'react'
+import AddMemberModal from './AddMemberModal'
 import DeleteChannelModal from './DeleteChannelModal'
 
 const Channel = ({ channel, name, isActive = false, isPrivate, unreadCount = 0, onClick, onChannelUpdate }) => {
   const [showChannelMenu, setShowChannelMenu] = useState(false)
+  const [showAddMember, setShowAddMember] = useState(false)
   const [showDeleteChannel, setShowDeleteChannel] = useState(false)
   const channelmenuRef = useRef(null)
 
@@ -58,7 +60,10 @@ const Channel = ({ channel, name, isActive = false, isPrivate, unreadCount = 0, 
               <div className='absolute mt-4 right-2 w-40 rounded-md shadow-lg bg-slate-800 text-white ring-1 ring-slate-600 ring-opacity-5 z-50'>
                 <div className='py-1 text-sm'>
                   {isPrivate && (
-                    <button className='flex px-4 py-2 w-full text-gray-300 hover:bg-slate-700 cursor-pointer'>
+                    <button
+                      onClick={() => setShowAddMember(true)}
+                      className='flex px-4 py-2 w-full text-gray-300 hover:bg-slate-700 cursor-pointer'
+                    >
                       <UserPlusIcon className='h-5 w-5' />
                       <div className='ms-2'>Add Member</div>
                     </button>
@@ -76,6 +81,7 @@ const Channel = ({ channel, name, isActive = false, isPrivate, unreadCount = 0, 
           </div>
         </div>
       </div>
+      {showAddMember && <AddMemberModal channel={channel} showAddMember={showAddMember} setShowAddMember={setShowAddMember} onChannelUpdate={onChannelUpdate} />}
       {showDeleteChannel && <DeleteChannelModal channel={channel} showDeleteChannel={showDeleteChannel} setShowDeleteChannel={setShowDeleteChannel} onChannelUpdate={onChannelUpdate} />}
     </>
   )

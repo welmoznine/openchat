@@ -8,7 +8,6 @@ export default function DeleteChannelModal ({ channel, showDeleteChannel, setSho
 
   const onSubmit = (e) => {
     e.preventDefault()
-    console.log(channel.id)
 
     deleteChannel(channel.id).then(() => {
       setShowDeleteChannel(false)
