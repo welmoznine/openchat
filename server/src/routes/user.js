@@ -54,6 +54,9 @@ router.get('/channels', async (req, res) => {
           },
         ],
       },
+      orderBy: {
+        isPrivate: 'asc',
+      }
     })
 
     console.log(
@@ -219,6 +222,61 @@ router.get('/channels/:channelId/messages', async (req, res) => {
   } catch (error) {
     console.error('Error fetching channel messages:', error)
     res.status(500).json({ error: 'Failed to fetch messages' })
+  }
+})
+
+router.post('/channels/:channelId/members', async (req, res) => {
+  const { channelId } = req.params
+  const { username } = req.body
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' })
+  }
+
+  try {
+    // Find the user by username
+    const user = await prisma.user.findUnique({
+      where: { username },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Check if channel exists
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+    })
+
+    if (!channel) {
+      return res.status(404).json({ error: 'Channel not found' })
+    }
+
+    const existingMember = await prisma.channelMember.findUnique({
+      where: {
+        userId_channelId: {
+          userId: user.id,
+          channelId,
+        },
+      },
+    })
+
+    if (existingMember) {
+      return res.status(409).json({ error: 'User is already a member of this channel' })
+    }
+
+    // Add user to channel
+    const newMember = await prisma.channelMember.create({
+      data: {
+        userId: user.id,
+        channelId,
+      },
+    })
+
+    return res.status(201).json({ message: 'User added to channel', member: newMember })
+  } catch (error) {
+    console.error('Error adding member:', error)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 })
 

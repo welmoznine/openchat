@@ -1,4 +1,4 @@
-import { use, useState } from 'react'
+import { useState } from 'react'
 
 export default function AddMemberModal ({ channel, showAddMember, setShowAddMember, onChannelUpdate }) {
   const [memberName, setMemberName] = useState('')
@@ -7,6 +7,7 @@ export default function AddMemberModal ({ channel, showAddMember, setShowAddMemb
 
   const onSubmit = (e) => {
     e.preventDefault()
+    console.log(channel.id)
     console.log(memberName)
   }
 
