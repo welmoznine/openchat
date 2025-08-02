@@ -48,6 +48,7 @@ const Sidebar = ({
             {channels.map((channel) => (
               <ChannelItem
                 key={channel.id}
+                channel={channel}
                 name={channel.name}
                 isActive={activeChannel === channel.id}
                 isPrivate={channel.isPrivate}

@@ -3,7 +3,7 @@ import { EllipsisHorizontalIcon, TrashIcon, UserPlusIcon } from '@heroicons/reac
 import { useState, useRef, useEffect } from 'react'
 import DeleteChannelModal from './DeleteChannelModal'
 
-const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }) => {
+const Channel = ({ channel, name, isActive = false, isPrivate, unreadCount = 0, onClick }) => {
   const [showChannelMenu, setShowChannelMenu] = useState(false)
   const [showDeleteChannel, setShowDeleteChannel] = useState(false)
   const channelmenuRef = useRef(null)
@@ -76,7 +76,7 @@ const Channel = ({ name, isActive = false, isPrivate, unreadCount = 0, onClick }
           </div>
         </div>
       </div>
-      {showDeleteChannel && <DeleteChannelModal showDeleteChannel={showDeleteChannel} setShowDeleteChannel={setShowDeleteChannel} />}
+      {showDeleteChannel && <DeleteChannelModal channel={channel} showDeleteChannel={showDeleteChannel} setShowDeleteChannel={setShowDeleteChannel} />}
     </>
   )
 }

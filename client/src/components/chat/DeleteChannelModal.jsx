@@ -1,11 +1,11 @@
 import { useEffect } from 'react'
 
-export default function DeleteChannelModal ({ showDeleteChannel, setShowDeleteChannel }) {
+export default function DeleteChannelModal ({ channel, showDeleteChannel, setShowDeleteChannel }) {
   if (!showDeleteChannel) return null
 
   const onSubmit = (e) => {
     e.preventDefault()
-    console.log('deleting')
+    console.log(channel.id)
   }
 
   return (

@@ -129,6 +129,35 @@ router.post('/channels', async (req, res) => {
   }
 })
 
+// Delete a channel
+router.delete('/channels/:id', async (req, res) => {
+  const { id } = req.params
+
+  console.log(id)
+
+  try {
+    // Check if existing channel
+    const existing = await prisma.channel.findUnique({
+      where: { id },
+    })
+
+    // Not existing, respond not found
+    if (!existing) {
+      return res.status(404).json({ error: 'Channel not found' })
+    }
+
+    // Deleting channel
+    await prisma.channel.delete({
+      where: { id },
+    })
+
+    return res.status(200).json({ message: 'Channel deleted successfully' })
+  } catch (error) {
+    console.error()
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 // Get message history for a specific channel by channel ID
 router.get('/channels/:channelId/messages', async (req, res) => {
   try {
