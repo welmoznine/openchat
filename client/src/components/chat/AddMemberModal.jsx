@@ -1,14 +1,19 @@
 import { useState } from 'react'
+import { useAddChannelMember } from '../../hooks/channels/useAddChannelMember'
 
 export default function AddMemberModal ({ channel, showAddMember, setShowAddMember, onChannelUpdate }) {
   const [memberName, setMemberName] = useState('')
+  const { addChannelMember } = useAddChannelMember()
 
   if (!showAddMember) return null
 
   const onSubmit = (e) => {
     e.preventDefault()
-    console.log(channel.id)
-    console.log(memberName)
+
+    addChannelMember(channel.id, memberName).then(() => {
+      setShowAddMember(false)
+      onChannelUpdate()
+    })
   }
 
   return (
