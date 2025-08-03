@@ -121,7 +121,7 @@ describe('User API Routes', () => {
 
       expect(response.body).toHaveLength(2)
       const channelIds = response.body.map(ch => ch.id)
-      
+
       expect(channelIds).toContain(publicChannel.id)
       expect(channelIds).toContain(privateChannel1.id)
       expect(channelIds).not.toContain(privateChannel2.id)
@@ -138,7 +138,7 @@ describe('User API Routes', () => {
 
     it('should create a public channel and add all users as members', async () => {
       const user2 = await createTestUser('user2', 'user2@example.com')
-      
+
       const channelData = {
         name: 'Public Channel',
         description: 'A test channel',
@@ -171,7 +171,7 @@ describe('User API Routes', () => {
 
     it('should create a private channel with only creator as member', async () => {
       await createTestUser('user2', 'user2@example.com')
-      
+
       const channelData = {
         name: 'Private Channel',
         isPrivate: true,
