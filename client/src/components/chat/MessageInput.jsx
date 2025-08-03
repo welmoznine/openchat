@@ -57,7 +57,6 @@ const MessageInput = ({
     <div className='px-6 py-4 border-t border-slate-600 relative'>
       <div className='flex items-center space-x-2'>
 
-
         <div className='flex-1'>
           <textarea
             ref={textareaRef}
@@ -85,7 +84,8 @@ const MessageInput = ({
             onClick={toggleEmojiPicker}
             type='button'
             className='p-2 bg-slate-500 rounded-lg hover:bg-slate-400 text-white'
-            title='Add emoji'>
+            title='Add emoji'
+          >
             😊
           </button>
           {showEmojiPicker && (
@@ -94,7 +94,6 @@ const MessageInput = ({
             </div>
           )}
         </div>
-
 
         <button
           onClick={handleSubmit}
