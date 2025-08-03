@@ -51,10 +51,14 @@ export async function createTestUsers (usernames) {
   return users
 }
 
-export async function createTestChannel (name) {
+export async function createTestChannel (name, options = {}) {
   const db = getTestDb()
   return await db.channel.create({
-    data: { name }
+    data: {
+      name,
+      isPrivate: false,
+      ...options
+    }
   })
 }
 
