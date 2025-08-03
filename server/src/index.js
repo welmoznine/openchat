@@ -20,17 +20,22 @@ const PORT = process.env.PORT || 3000
 
 const setupRedisAdapter = () => {
   try {
-    const { pubClient, subClient } = createRedisPubSubClients()
+    const { pubClient, subClient, redis } = createRedisPubSubClients()
     
     if (pubClient && subClient) {
       io.adapter(createAdapter(pubClient, subClient))
       console.log('Socket.io Redis adapter enabled')
     } else {
-      console.log('Socket.io running without Redis adapter (single instance mode)')
+      console.warn('Socket.io running without Redis adapter (single instance mode)')
+    }
+
+    if (redis) {
+      global.redis = redis
+      console.log('Redis client available for presence management')
     }
   } catch (error) {
     console.error('Failed to setup Redis adapter:', error)
-    console.log('Socket.io running without Redis adapter (single instance mode)')
+    console.warn('Socket.io running without Redis adapter (single instance mode)')
   }
 }
 

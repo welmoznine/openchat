@@ -14,10 +14,10 @@ export const createRedisClient = () => {
     retryStrategy: (times) => {
       if (times > 10) {
         console.error('Redis: Max reconnection attempts reached')
-        return null // Stop retrying
+        return null
       }
       const delay = Math.min(times * 50, 500)
-      console.log(`Redis: Reconnecting attempt ${times} after ${delay}ms`)
+      console.warn(`Redis: Reconnecting attempt ${times} after ${delay}ms`)
       return delay
     }
   })
@@ -50,6 +50,7 @@ export const createRedisPubSubClients = () => {
 
   const subClient = pubClient.duplicate()
   const redis = pubClient.duplicate() // General commands client
+
   subClient.on('error', (err) => {
     console.error('Redis Sub Client Error:', err)
   })
