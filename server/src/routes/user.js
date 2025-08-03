@@ -171,19 +171,28 @@ router.get('/channels/:channelId/messages', async (req, res) => {
     const { channelId } = req.params
     const { limit = 50, before } = req.query
 
-    // Verify user is a member of this channel
-    const membership = await prisma.channelMember.findUnique({
+    // First need to verify if channel is public
+    const channel = await prisma.channel.findUnique({
       where: {
-        userId_channelId: {
-          userId: req.user.id,
-          channelId,
-        },
-      },
+        id: channelId,
+      }
     })
 
-    // If not a member, return 403 Forbidden
-    if (!membership) {
-      return res.status(403).json({ error: 'Not a member of this channel' })
+    if (channel.isPrivate) {
+      // Verify user is a member of this channel
+      const membership = await prisma.channelMember.findUnique({
+        where: {
+          userId_channelId: {
+            userId: req.user.id,
+            channelId,
+          },
+        },
+      })
+
+      // If not a member, return 403 Forbidden
+      if (!membership) {
+        return res.status(403).json({})
+      }
     }
 
     // Build query conditions
