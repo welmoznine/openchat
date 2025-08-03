@@ -436,15 +436,15 @@ resource "google_cloud_run_v2_service_iam_binding" "backend_noauth" {
 
 # Redis
 resource "google_redis_instance" "main" {
-  name             = "${var.app_name}-redis"
-  tier             = "BASIC"
-  memory_size_gb   = 1
-  region           = var.region
-  redis_version    = "REDIS_7_0"
-  
+  name           = "${var.app_name}-redis"
+  tier           = "BASIC"
+  memory_size_gb = 1
+  region         = var.region
+  redis_version  = "REDIS_7_0"
+
   authorized_network = google_compute_network.main.id
   connect_mode       = "DIRECT_PEERING"
-  
+
   depends_on = [
     google_project_service.product_apis,
     google_project_iam_member.tf_sa_required_roles
