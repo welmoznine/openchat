@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react'
  * @param {Function} appendNewMessage - Function to add new messages to state.
  * @returns {Object} - Contains connected users, typing users, notifications, and setters.
  */
-export const useSocketEvents = (socket, user, activeChannelId, socketConnected, appendNewMessage) => {
+export const useSocketEvents = (socket, user, activeChannelId, socketConnected, appendNewMessage, refreshChannels) => {
   // State holding the list of currently connected users
   const [connectedUsers, setConnectedUsers] = useState([])
 
@@ -129,6 +129,11 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
       }
     }
 
+    const onChannelRefresh = (channelData) => {
+      console.log('New channel was added: ', channelData)
+      refreshChannels()
+    }
+
     // Attach all defined socket event listeners
     socket.on('connect', onConnect)
     socket.on('disconnect', onDisconnect)
@@ -138,6 +143,7 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
     socket.on('message_notification', onMessageNotification)
     socket.on('users_list', onUsersList)
     socket.on('user_typing', onUserTyping)
+    socket.on('channel_refresh', onChannelRefresh)
 
     // Cleanup function to remove listeners on component unmount or dependency change
     return () => {

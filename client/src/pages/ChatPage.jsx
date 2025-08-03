@@ -63,7 +63,7 @@ function ChatPage () {
     setTypingUsers,
     notification,
     setNotification
-  } = useSocketEvents(socket, user, activeChannelId, socketConnected, appendNewMessage)
+  } = useSocketEvents(socket, user, activeChannelId, socketConnected, appendNewMessage, refreshChannels)
 
   // Message input management
   const {
@@ -175,7 +175,7 @@ function ChatPage () {
             SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
             toggleSidebar={toggleSidebar}
             showSidebar={showSidebar}
-            onChannelAdded={refreshChannels}
+            onChannelUpdate={refreshChannels}
           />
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>

@@ -11,7 +11,7 @@ import { useAddChannel } from '../../hooks/channels/useAddChannel'
  *
  * @returns {JSX.Element|null} The rendered modal form or null if not visible.
  */
-export default function AddChannelModal ({ showAddChannel, setShowAddChannel, onChannelAdded }) {
+export default function AddChannelModal ({ showAddChannel, setShowAddChannel, onChannelUpdate }) {
   // State for form inputs
   const [channelName, setChannelName] = useState('')
   const [channelDescription, setChannelDescription] = useState('')
@@ -46,7 +46,7 @@ export default function AddChannelModal ({ showAddChannel, setShowAddChannel, on
 
     addChannel(channelData).then(() => {
       setShowAddChannel(false)
-      onChannelAdded()
+      onChannelUpdate()
     })
   }
 

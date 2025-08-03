@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { authenticateToken } from '../middleware/auth.js'
+import { getIO } from '../socket-handlers/socket.js'
 
 const prisma = new PrismaClient()
 const router = Router()
@@ -54,6 +55,9 @@ router.get('/channels', async (req, res) => {
           },
         ],
       },
+      orderBy: {
+        isPrivate: 'asc',
+      }
     })
 
     console.log(
@@ -68,6 +72,8 @@ router.get('/channels', async (req, res) => {
 
 // Create a new channel
 router.post('/channels', async (req, res) => {
+  const io = getIO()
+
   try {
     const { name, description, isPrivate } = req.body
 
@@ -122,9 +128,39 @@ router.post('/channels', async (req, res) => {
       skipDuplicates: true, // In case the creator is somehow duplicated, skip it
     })
 
+    io.emit('channel_refresh')
     return res.status(201).json(newChannel)
   } catch (error) {
     console.error('Failed to create channel: ', error)
+    return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Delete a channel
+router.delete('/channels/:id', async (req, res) => {
+  const io = getIO()
+  const { id } = req.params
+
+  try {
+    // Check if existing channel
+    const existing = await prisma.channel.findUnique({
+      where: { id },
+    })
+
+    // Not existing, respond not found
+    if (!existing) {
+      return res.status(404).json({ error: 'Channel not found' })
+    }
+
+    // Deleting channel
+    await prisma.channel.delete({
+      where: { id },
+    })
+
+    io.emit('channel_refresh')
+    return res.status(200).json({ message: 'Channel deleted successfully' })
+  } catch (error) {
+    console.error()
     return res.status(500).json({ error: 'Internal server error' })
   }
 })
@@ -190,6 +226,66 @@ router.get('/channels/:channelId/messages', async (req, res) => {
   } catch (error) {
     console.error('Error fetching channel messages:', error)
     res.status(500).json({ error: 'Failed to fetch messages' })
+  }
+})
+
+// Add member to channel
+router.post('/channels/:channelId/members', async (req, res) => {
+  const io = getIO()
+  const { channelId } = req.params
+  const { username } = req.body
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' })
+  }
+
+  try {
+    // Find the user by username
+    const user = await prisma.user.findUnique({
+      where: { username },
+    })
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Check if channel exists
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+    })
+
+    if (!channel) {
+      return res.status(404).json({ error: 'Channel not found' })
+    }
+
+    const existingMember = await prisma.channelMember.findUnique({
+      where: {
+        userId_channelId: {
+          userId: user.id,
+          channelId,
+        },
+      },
+    })
+
+    if (existingMember) {
+      return res.status(409).json({ error: 'User is already a member of this channel' })
+    }
+
+    // Add user to channel
+    const newMember = await prisma.channelMember.create({
+      data: {
+        userId: user.id,
+        channelId,
+      },
+    })
+
+    // TODO: This really only needs to go to the user who was added
+    io.emit('channel_refresh')
+
+    return res.status(201).json({ message: 'User added to channel', member: newMember })
+  } catch (error) {
+    console.error('Error adding member:', error)
+    return res.status(500).json({ error: 'Internal server error' })
   }
 })
 
