@@ -171,8 +171,6 @@ router.delete('/channel-members/:channelId', async (req, res) => {
   const userId = req.user.id
   const { channelId } = req.params
 
-  console.log('asdsdsdsd' + userId)
-
   try {
     await prisma.channelMember.delete({
       where: {
