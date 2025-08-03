@@ -55,3 +55,13 @@ output "deployment_service_account" {
   description = "Deployment service account email"
   value       = google_service_account.deployment_sa.email
 }
+
+output "redis_host" {
+  description = "Redis instance host"
+  value       = google_redis_instance.main.host
+}
+
+output "redis_port" {
+  description = "Redis instance port"
+  value       = google_redis_instance.main.port
+}
