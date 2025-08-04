@@ -6,12 +6,14 @@ import cors from 'cors'
 import { handleUserJoin } from './socket-handlers/userJoin.js'
 import { handleJoinChannel } from './socket-handlers/joinChannel.js'
 import { handleSendMessage } from './socket-handlers/sendMessage.js'
+import { handleDeleteMessage } from './socket-handlers/deleteMessage.js'
 import { handleTypingEvents } from './socket-handlers/typingEvents.js'
 import { handleDisconnect } from './socket-handlers/disconnect.js'
 import {
   validateUserData,
   validateMessageData,
   validateChannelData,
+  validateDeleteData,
   emitError,
   logSocketEvent,
   validateSocketConnection,
@@ -130,6 +132,21 @@ export const handleSocketConnection = (socket) => {
     }
 
     handleSendMessage(socket, messageData, connectedUsers)
+  }))
+
+  // ---------- Handle message deletion ----------
+  socket.on('delete_message', withErrorHandling('delete_message', (deleteData) => {
+    const validation = validateDeleteData(deleteData)
+    if (!validation.isValid) {
+      throw new Error(`Invalid delete data: ${validation.errors.join(', ')}`)
+    }
+
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
+    }
+
+    handleDeleteMessage(socket, deleteData, connectedUsers)
   }))
 
   // ---------- Handle typing events ----------

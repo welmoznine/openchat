@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from 'react'
  * Custom hook to fetch and manage messages for a given channel.
  *
  * @param {string} channelId - The ID of the current channel.
- * @param {boolean} enabled - Flag to control if the hook should fetch messages.
- * @returns {Object} - Contains messages, loading state, error, and functions for refreshing and appending messages.
+ * @param {Object} socket - Socket.io instance for real-time updates
+ * @returns {Object} - Contains messages, loading state, error, and functions for managing messages.
  */
-export const useChannelMessages = (channelId, enabled = true) => {
+export const useChannelMessages = (channelId, socket) => {
   // State to hold the list of messages for the current channel
   const [messages, setMessages] = useState([])
 
@@ -16,6 +16,9 @@ export const useChannelMessages = (channelId, enabled = true) => {
 
   // State to store any error messages
   const [error, setError] = useState(null)
+
+  // Track messages being deleted to prevent duplicates
+  const [deletingMessages, setDeletingMessages] = useState(new Set())
 
   /**
    * Fetches messages from the API for the current channel.
@@ -74,17 +77,117 @@ export const useChannelMessages = (channelId, enabled = true) => {
       }
       return [...prevMessages, newMessage]
     })
-  }, []) // Only recreate the callback when needed (i.e., no dependencies)
+  }, [])
 
-  // Effect to auto-fetch messages when channelId changes (if enabled)
-  useEffect(() => {
-    if (enabled) {
-      fetchMessages() // Fetch messages when the channel is enabled
-    } else {
-      setMessages([]) // Clear messages if disabled (e.g., no active channel)
+  /**
+   * Removes a message from the messages list (for soft deletes).
+   *
+   * @param {string} messageId - The ID of the message to delete.
+   */
+  const deleteMessage = useCallback((messageId) => {
+    // Check if message is already being deleted
+    if (deletingMessages.has(messageId)) {
+      console.log(`Message ${messageId} is already being deleted, skipping...`)
+      return Promise.resolve() // Return resolved promise to prevent errors
     }
-  }, [fetchMessages, enabled]) // Run effect when enabled or fetchMessages changes
+
+    // Add to deleting set
+    setDeletingMessages(prev => new Set(prev).add(messageId))
+
+    // Remove from messages immediately for optimistic update
+    setMessages((prevMessages) =>
+      prevMessages.filter((msg) => msg.id !== messageId)
+    )
+
+    // Remove from deleting set after a delay
+    setTimeout(() => {
+      setDeletingMessages(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(messageId)
+        return newSet
+      })
+    }, 1000)
+
+    return Promise.resolve()
+  }, [deletingMessages])
+
+  // Socket event listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return
+
+    // Listen for message deletion events
+    const handleMessageDeleted = (deleteData) => {
+      console.log('Message deleted event received:', deleteData)
+      if (deleteData.channelId === channelId) {
+        deleteMessage(deleteData.messageId)
+      }
+    }
+
+    // Listen for delete success
+    const handleDeleteSuccess = (deleteData) => {
+      console.log('Delete success received:', deleteData)
+      if (deleteData.channelId === channelId) {
+        deleteMessage(deleteData.messageId)
+      }
+    }
+
+    // Listen for delete errors
+    const handleDeleteError = (errorData) => {
+      console.error('Delete error received:', errorData)
+
+      // Only set error for non-"already deleted" errors
+      if (!errorData.error?.includes('already deleted')) {
+        setError(`Failed to delete message: ${errorData.error}`)
+      } else {
+        console.log('Message already deleted')
+        // Still remove from UI if it exists
+        if (errorData.messageId) {
+          setMessages(prevMessages =>
+            prevMessages.filter(msg => msg.id !== errorData.messageId)
+          )
+        }
+      }
+
+      // Remove from deleting set
+      if (errorData.messageId) {
+        setDeletingMessages(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(errorData.messageId)
+          return newSet
+        })
+      }
+    }
+
+    // Add event listeners
+    socket.on('message_deleted', handleMessageDeleted)
+    socket.on('message_delete_success', handleDeleteSuccess)
+    socket.on('message_delete_error', handleDeleteError)
+
+    // Cleanup function to remove event listeners
+    return () => {
+      socket.off('message_deleted', handleMessageDeleted)
+      socket.off('message_delete_success', handleDeleteSuccess)
+      socket.off('message_delete_error', handleDeleteError)
+    }
+  }, [socket, channelId, deleteMessage])
+
+  // Effect to auto-fetch messages when channelId changes
+  useEffect(() => {
+    if (channelId) {
+      fetchMessages() // Fetch messages when the channel changes
+    } else {
+      setMessages([]) // Clear messages if no active channel
+      setDeletingMessages(new Set()) // Reset deleting messages
+    }
+  }, [fetchMessages])
 
   // Return the current state of messages, loading, error, and functions to manage messages
-  return { messages, loading, error, refresh: fetchMessages, appendNewMessage }
+  return {
+    messages,
+    loading,
+    error,
+    refresh: fetchMessages,
+    appendNewMessage,
+    deleteMessage
+  }
 }

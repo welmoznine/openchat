@@ -209,25 +209,23 @@ router.get('/channels/:channelId/messages', async (req, res) => {
       }
     })
 
-    if (channel.isPrivate) {
-      // Verify user is a member of this channel
-      const membership = await prisma.channelMember.findUnique({
-        where: {
-          userId_channelId: {
-            userId: req.user.id,
-            channelId,
-          },
+    // Verify user is a member of this channel for all channel types
+    const membership = await prisma.channelMember.findUnique({
+      where: {
+        userId_channelId: {
+          userId: req.user.id,
+          channelId,
         },
-      })
+      },
+    })
 
-      // If not a member, return 403 Forbidden
-      if (!membership) {
-        return res.status(403).json({})
-      }
+    // If not a member, return 403 Forbidden
+    if (!membership) {
+      return res.status(403).json({ error: 'Not a member of this channel' })
     }
 
     // Build query conditions
-    const whereConditions = { channelId }
+    const whereConditions = { channelId, isDeleted: false }
     if (before) {
       whereConditions.createdAt = { lt: new Date(before) }
     }
@@ -326,6 +324,65 @@ router.post('/channels/:channelId/members', async (req, res) => {
   } catch (error) {
     console.error('Error adding member:', error)
     return res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Delete a message (soft delete)
+router.delete('/messages/:messageId', async (req, res) => {
+  try {
+    const { messageId } = req.params
+    const userId = req.user.id
+
+    // Find the message and verify ownership
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: {
+        user: {
+          select: { id: true, username: true }
+        },
+        channel: {
+          select: { id: true, name: true }
+        }
+      }
+    })
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' })
+    }
+
+    // If message is already deleted
+    if (message.isDeleted) {
+      console.log(`Message ${messageId} already deleted`)
+      return res.json({
+        success: true,
+        messageId,
+        channelId: message.channelId,
+        alreadyDeleted: true
+      })
+    }
+
+    // Check if user owns the message
+    if (message.userId !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own messages' })
+    }
+
+    // Soft delete the message
+    await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date()
+      }
+    })
+
+    res.json({
+      success: true,
+      messageId,
+      channelId: message.channelId
+    })
+  } catch (error) {
+    console.error('Error deleting message:', error)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })
 
