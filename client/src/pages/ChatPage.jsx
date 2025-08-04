@@ -54,7 +54,8 @@ function ChatPage () {
     loading: msgLoading,
     error: msgError,
     appendNewMessage,
-  } = useChannelMessages(activeChannelId) // Custom hook for messages in the active channel
+    deleteMessage,
+  } = useChannelMessages(activeChannelId, socket) // Custom hook for messages in the active channel
 
   // Socket events management
   const {
@@ -188,7 +189,7 @@ function ChatPage () {
 
           <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
             {formattedMessages.map((message) => (
-              <Message key={message.id} message={message} />
+              <Message key={message.id} message={message} onDeleteMessage={deleteMessage} socket={socket} />
             ))}
 
             {/* Typing indicators */}

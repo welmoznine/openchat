@@ -151,7 +151,6 @@ export const formatMessage = (messageData, user) => {
     channel: messageData.channel || user.currentChannel,
     timestamp: new Date().toISOString(),
     messageType: messageData.messageType || 'text',
-    edited: false,
     reactions: {},
   }
 }
@@ -212,4 +211,22 @@ export const validateSocketConnection = (socket, connectedUsers) => {
   }
 
   return { isValid: true, user }
+}
+
+/**
+ * Validates delete message data
+ */
+export const validateDeleteData = (deleteData) => {
+  const errors = []
+
+  if (!deleteData) {
+    errors.push('Delete data is required')
+    return { isValid: false, errors }
+  }
+
+  if (!deleteData.messageId || typeof deleteData.messageId !== 'string') {
+    errors.push('Valid messageId is required')
+  }
+
+  return { isValid: errors.length === 0, errors }
 }

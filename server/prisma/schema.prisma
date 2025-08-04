@@ -119,12 +119,15 @@ model UserChannelRead {
 }
 
 model Message {
-  id              String   @id @default(uuid())               // Primary key, UUID
-  userId          String   @map("user_id")                    // FK to message author
-  channelId       String   @map("channel_id")                 // FK to channel where message was posted
-  mentionedUserId String?  @map("mentioned_user_id")          // Optional FK to mentioned user
-  content         String                                      // Message body content
-  createdAt       DateTime @default(now()) @map("created_at") // Timestamp of message creation
+  id              String    @id @default(uuid())               // Primary key, UUID
+  userId          String    @map("user_id")                    // FK to message author
+  channelId       String    @map("channel_id")                 // FK to channel where message was posted
+  mentionedUserId String?   @map("mentioned_user_id")          // Optional FK to mentioned user
+  content         String                                       // Message body content
+  isDeleted       Boolean   @default(false) @map("is_deleted") // Soft delete flag
+  createdAt       DateTime  @default(now()) @map("created_at") // Timestamp of message creation
+  updatedAt       DateTime  @updatedAt @map("updated_at")      // Timestamp of last update
+  deletedAt       DateTime? @map("deleted_at")                 // Timestamp when message was deleted
 
   user          User                @relation("AuthorMessages", fields: [userId], references: [id], onDelete: Cascade)          // Message author (cascades on user deletion)
   channel       Channel             @relation(fields: [channelId], references: [id], onDelete: Cascade)                         // Channel where posted (cascades on channel deletion)
@@ -134,5 +137,6 @@ model Message {
   @@index([channelId]) // Index for efficient channel message queries
   @@index([userId])    // Index for efficient user message queries
   @@index([createdAt]) // Index for efficient chronological ordering
+  @@index([isDeleted]) // Index for filtering out deleted messages
   @@map("Messages")    // Maps to the table Messages
 }

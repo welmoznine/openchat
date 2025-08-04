@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000
 const setupRedisAdapter = () => {
   try {
     const { pubClient, subClient, redis } = createRedisPubSubClients()
-    
+
     if (pubClient && subClient) {
       io.adapter(createAdapter(pubClient, subClient))
       console.log('Socket.io Redis adapter enabled')
