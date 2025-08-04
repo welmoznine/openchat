@@ -313,7 +313,6 @@ describe('User API Routes', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403)
 
-      console.log(response.body)
       expect(response.body).toEqual({
         error: 'Not a member of this channel',
       })
