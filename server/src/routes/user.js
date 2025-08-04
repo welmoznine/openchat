@@ -221,7 +221,7 @@ router.get('/channels/:channelId/messages', async (req, res) => {
 
     // If not a member, return 403 Forbidden
     if (!membership) {
-      return res.status(403).json({})
+      return res.status(403).json({ error: 'Not a member of this channel' })
     }
 
     // Build query conditions
