@@ -306,13 +306,14 @@ describe('User API Routes', () => {
     })
 
     it('should return 403 when user is not a channel member', async () => {
-      const nonMemberChannel = await createTestChannel('Non Member Channel')
+      const nonMemberChannel = await createTestChannel('Non Member Channel', { isPrivate: true })
 
       const response = await request(app)
         .get(`/api/user/channels/${nonMemberChannel.id}/messages`)
         .set('Authorization', `Bearer ${authToken}`)
         .expect(403)
 
+      console.log(response.body)
       expect(response.body).toEqual({
         error: 'Not a member of this channel',
       })
