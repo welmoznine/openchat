@@ -165,25 +165,65 @@ router.delete('/channels/:id', async (req, res) => {
   }
 })
 
+// Delete a channel member
+router.delete('/channel-members/:channelId', async (req, res) => {
+  const io = getIO()
+  const userId = req.user.id
+  const { channelId } = req.params
+
+  try {
+    await prisma.channelMember.delete({
+      where: {
+        userId_channelId: {
+          userId,
+          channelId,
+        },
+      },
+    })
+
+    // TODO: Only needs to go to specific user leaving channel
+    io.emit('channel_refresh')
+    res.status(200).json({ message: 'User removed from channel.' })
+  } catch (error) {
+    console.error(error)
+
+    // Not found error handling
+    if (error.code === 'P2025') {
+      res.status(404).json({ error: 'Channel membership not found.' })
+    } else {
+      res.status(500).json({ error: 'Failed to remove user from channel.' })
+    }
+  }
+})
+
 // Get message history for a specific channel by channel ID
 router.get('/channels/:channelId/messages', async (req, res) => {
   try {
     const { channelId } = req.params
     const { limit = 50, before } = req.query
 
-    // Verify user is a member of this channel
-    const membership = await prisma.channelMember.findUnique({
+    // First need to verify if channel is public
+    const channel = await prisma.channel.findUnique({
       where: {
-        userId_channelId: {
-          userId: req.user.id,
-          channelId,
-        },
-      },
+        id: channelId,
+      }
     })
 
-    // If not a member, return 403 Forbidden
-    if (!membership) {
-      return res.status(403).json({ error: 'Not a member of this channel' })
+    if (channel.isPrivate) {
+      // Verify user is a member of this channel
+      const membership = await prisma.channelMember.findUnique({
+        where: {
+          userId_channelId: {
+            userId: req.user.id,
+            channelId,
+          },
+        },
+      })
+
+      // If not a member, return 403 Forbidden
+      if (!membership) {
+        return res.status(403).json({})
+      }
     }
 
     // Build query conditions
