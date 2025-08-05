@@ -3,9 +3,11 @@ const Avatar = ({ initials, bgColor, size = 'w-8 h-8', textSize = 'text-sm', sho
   const statusColors = {
     online: 'bg-green-500',
     away: 'bg-yellow-500',
+    busy: 'bg-red-500',
     offline: 'bg-gray-500'
   }
 
+  const normalizedStatus = status.toLowerCase()
   const statusSize = size === 'w-6 h-6' ? 'w-3 h-3' : 'w-4 h-4'
 
   return (
@@ -18,7 +20,7 @@ const Avatar = ({ initials, bgColor, size = 'w-8 h-8', textSize = 'text-sm', sho
         <span className={`${textSize} text-white`}>{initials}</span>
       </div>
       {showStatus && (
-        <div className={`absolute -bottom-0.5 -right-0.5 ${statusSize} ${statusColors[status]} border border-slate-900 rounded-full`} />
+        <div className={`absolute -bottom-0.5 -right-0.5 ${statusSize} ${statusColors[normalizedStatus]} border border-slate-900 rounded-full`} />
       )}
     </div>
   )
