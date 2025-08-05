@@ -105,6 +105,13 @@ function ChatPage () {
     console.log('Opening DM with:', userName)
   }
 
+  const handleStatusChange = (newStatus) => {
+    setUserStatus(newStatus) // Update local state to reflect immediately in UI
+    if (socket && socket.connected) {
+      socket.emit('status_update', newStatus)
+    }
+  }
+
   const handleLogout = () => {
     if (socket) {
       socket.disconnect()
