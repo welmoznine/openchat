@@ -306,7 +306,7 @@ describe('User API Routes', () => {
     })
 
     it('should return 403 when user is not a channel member', async () => {
-      const nonMemberChannel = await createTestChannel('Non Member Channel')
+      const nonMemberChannel = await createTestChannel('Non Member Channel', { isPrivate: true })
 
       const response = await request(app)
         .get(`/api/user/channels/${nonMemberChannel.id}/messages`)
