@@ -27,8 +27,7 @@ resource "google_project_service" "product_apis" {
     "artifactregistry.googleapis.com",
     "cloudbuild.googleapis.com",
     "logging.googleapis.com",
-    "monitoring.googleapis.com",
-    "redis.googleapis.com"
+    "monitoring.googleapis.com"
   ])
 
   service            = each.value
@@ -53,7 +52,6 @@ resource "google_project_iam_member" "tf_sa_required_roles" {
     "roles/iam.serviceAccountUser",
     "roles/artifactregistry.admin",
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/redis.admin",
   ])
 
   project = var.project_id
@@ -366,9 +364,6 @@ resource "google_cloud_run_v2_service" "backend" {
           "PUBLIC_URL" = {
             value = "https://${var.frontend_service_name}-${data.google_project.current.number}.${var.region}.run.app"
           }
-          "REDIS_HOST" = {
-            value = google_redis_instance.main.host
-          }
         }
         content {
           name = env.key
@@ -432,21 +427,4 @@ resource "google_cloud_run_v2_service_iam_binding" "backend_noauth" {
   name     = google_cloud_run_v2_service.backend.name
   role     = "roles/run.invoker"
   members  = ["allUsers"]
-}
-
-# Redis
-resource "google_redis_instance" "main" {
-  name           = "${var.app_name}-redis"
-  tier           = "BASIC"
-  memory_size_gb = 1
-  region         = var.region
-  redis_version  = "REDIS_7_0"
-
-  authorized_network = google_compute_network.main.id
-  connect_mode       = "DIRECT_PEERING"
-
-  depends_on = [
-    google_project_service.product_apis,
-    google_project_iam_member.tf_sa_required_roles
-  ]
 }

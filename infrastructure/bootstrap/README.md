@@ -62,7 +62,7 @@ This bootstrap follows Google Cloud best practices for API management:
 ## After setup
 
 ```bash
-export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/../../terraform-key.json"
+export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/../terraform-key.json"
 cd ../terraform
 terraform init
 ```
