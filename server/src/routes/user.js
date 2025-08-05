@@ -227,7 +227,7 @@ router.get('/channels/:channelId/messages', async (req, res) => {
     }
 
     // Build query conditions
-    const whereConditions = { channelId, isDeleted:false }
+    const whereConditions = { channelId, isDeleted: false }
     if (before) {
       whereConditions.createdAt = { lt: new Date(before) }
     }
