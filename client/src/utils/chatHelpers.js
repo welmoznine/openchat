@@ -37,7 +37,7 @@ export const formatCurrentUserData = (user, socketConnected, userStatus) => {
         name: user.username, // User's name
         initials: generateUserInitials(user.username), // Initials derived from username
         bgColor: generateUserColor(user.username), // Background color assigned from username
-        status: user.status?.toLowerCase() || 'online', // Online status based on socket
+        status: user.status || 'Online', // Online status based on socket
       }
     : null // Return null if user is not defined
 }
@@ -58,7 +58,7 @@ export const formatDirectMessages = (connectedUsers, user) => {
         name: connectedUser.username, // Name of the other user
         initials: generateUserInitials(connectedUser.username), // Initials from username
         bgColor: generateUserColor(connectedUser.username), // Background color from username
-        status: connectedUser.status?.toLowerCase() || 'online', // Assume all connected users are online
+        status: connectedUser.status?.toLowerCase() || 'Online', // Assume all connected users are online
       },
       unreadCount: 0, // Default unread message count
     }))
@@ -75,6 +75,6 @@ export const formatOnlineMembers = (connectedUsers) => {
     name: connectedUser.username, // User's name
     initials: generateUserInitials(connectedUser.username), // User initials
     bgColor: generateUserColor(connectedUser.username), // User background color
-    status: connectedUser.status?.toLowerCase() || 'online', // All listed users are online
+    status: connectedUser.status?.toLowerCase() || 'Online', // All listed users are online
   }))
 }

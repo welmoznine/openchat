@@ -29,12 +29,11 @@ import Sidebar from '../components/chat/Sidebar'
 import ChatHeader from '../components/chat/ChatHeader'
 import MessageInput from '../components/chat/MessageInput'
 import Notification from '../components/chat/Notification'
-import SettingsMenu from '../components/SettingsMenu'
 
 function ChatPage () {
   // State variables
   const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
-  const [userStatus, setUserStatus] = useState('online') // default lower-case
+  const [userStatus, setUserStatus] = useState('Online') // default lower-case
 
   // Hooks
   const user = useUser() // Get user from context
@@ -184,7 +183,6 @@ function ChatPage () {
             onlineMembers={onlineMembers}
             onLogout={handleLogout}
             isConnected={socketConnected}
-            SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
             toggleSidebar={toggleSidebar}
             showSidebar={showSidebar}
             onChannelUpdate={refreshChannels}
