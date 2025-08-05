@@ -28,6 +28,8 @@ const Sidebar = ({
         onLogout={onLogout}
         isConnected={isConnected}
         toggleSidebar={toggleSidebar}
+        currentStatus={currentStatus}
+        onStatusChange={onStatusChange}
       />
 
       <div className='flex-1 overflow-y-auto'>
