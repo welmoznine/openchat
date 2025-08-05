@@ -126,7 +126,6 @@ model Message {
   content         String                                       // Message body content
   isDeleted       Boolean   @default(false) @map("is_deleted") // Soft delete flag
   createdAt       DateTime  @default(now()) @map("created_at") // Timestamp of message creation
-  updatedAt       DateTime  @updatedAt @map("updated_at")      // Timestamp of last update
   deletedAt       DateTime? @map("deleted_at")                 // Timestamp when message was deleted
 
   user          User                @relation("AuthorMessages", fields: [userId], references: [id], onDelete: Cascade)          // Message author (cascades on user deletion)
