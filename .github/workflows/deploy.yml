@@ -54,6 +54,9 @@ jobs:
             --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
             --region ${{ env.REGION }} \
             --platform managed \
+            --network openchat-vpc \
+            --subnet openchat-subnet \
+            --vpc-egress all \
             --allow-unauthenticated \
             --timeout=900 \
             --set-env-vars="NODE_ENV=production,PUBLIC_URL=https://openchat-frontend-${{ vars.GCP_PROJECT_NUMBER }}.${{ env.REGION }}.run.app" \
@@ -68,6 +71,7 @@ jobs:
             --service-account ${{ env.BACKEND_SA_EMAIL }} \
             --network openchat-vpc \
             --subnet openchat-subnet \
+            --vpc-egress all \
             --update-secrets="DATABASE_URL=openchat-database-url:latest" \
             --command "npx" \
             --args "prisma,migrate,deploy" \
