@@ -36,7 +36,6 @@ function ChatPage () {
   const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
   const [userStatus, setUserStatus] = useState('online') // default lower-case
 
-
   // Hooks
   const user = useUser() // Get user from context
   const logout = useLogout() // Get logout function

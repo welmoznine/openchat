@@ -44,7 +44,7 @@ const UserProfile = ({ user, onLogout, isConnected, toggleSidebar, currentStatus
           <Avatar
             initials={user.initials}
             bgColor={user.bgColor}
-            status={user.status}
+            status={currentStatus}
             onClick={toggleMenu}
           />
 
