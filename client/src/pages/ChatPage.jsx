@@ -29,11 +29,11 @@ import Sidebar from '../components/chat/Sidebar'
 import ChatHeader from '../components/chat/ChatHeader'
 import MessageInput from '../components/chat/MessageInput'
 import Notification from '../components/chat/Notification'
-import SettingsMenu from '../components/SettingsMenu'
 
 function ChatPage () {
   // State variables
   const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
+  const [userStatus, setUserStatus] = useState('Online') // default lower-case
 
   // Hooks
   const user = useUser() // Get user from context
@@ -48,7 +48,10 @@ function ChatPage () {
 
   // Active channel management
   const { activeChannelId, setActiveChannelId, activeChannel } = useActiveChannel(channels)
-
+  console.log('Current user:', user)
+  console.log('Channels:', channels)
+  console.log('Active Channel ID:', activeChannelId)
+  console.log('Socket connected:', socketConnected)
   const {
     messages,
     loading: msgLoading,
@@ -103,6 +106,13 @@ function ChatPage () {
   const handleDirectMessageSelect = (userName) => {
     // Handle DM selection - you can implement private messaging here
     console.log('Opening DM with:', userName)
+  }
+
+  const handleStatusChange = (newStatus) => {
+    setUserStatus(newStatus) // Update local state to reflect immediately in UI
+    if (socket && socket.connected) {
+      socket.emit('status_update', newStatus)
+    }
   }
 
   const handleLogout = () => {
@@ -173,10 +183,11 @@ function ChatPage () {
             onlineMembers={onlineMembers}
             onLogout={handleLogout}
             isConnected={socketConnected}
-            SettingsMenuComponent={<SettingsMenu onLogout={handleLogout} />}
             toggleSidebar={toggleSidebar}
             showSidebar={showSidebar}
             onChannelUpdate={refreshChannels}
+            currentStatus={userStatus}
+            onStatusChange={handleStatusChange}
           />
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>

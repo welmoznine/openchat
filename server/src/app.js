@@ -200,4 +200,21 @@ export const handleSocketConnection = (socket) => {
     timestamp: new Date().toISOString(),
     message: 'Successfully connected to the server'
   })
+  socket.on('status_update', (newStatus) => {
+    const user = connectedUsers.get(socket.id)
+    if (user) {
+      user.status = newStatus // update status
+
+      // Broadcast updated user list to all clients
+      const uniqueUsers = Array.from(usersByUserId.keys()).map(userId => {
+        const socketId = usersByUserId.get(userId)
+        return connectedUsers.get(socketId)
+      }).filter(Boolean)
+
+      console.log('Broadcasting updated users_list:', uniqueUsers)
+
+      socket.broadcast.emit('users_list', uniqueUsers)
+      socket.emit('users_list', uniqueUsers) // also send updated list back to sender
+    }
+  })
 }
