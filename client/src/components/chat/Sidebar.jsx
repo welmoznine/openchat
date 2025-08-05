@@ -17,7 +17,9 @@ const Sidebar = ({
   onLogout,
   isConnected,
   toggleSidebar,
-  onChannelUpdate
+  onChannelUpdate,
+  onStatusChange,
+  currentStatus
 }) => {
   const [showAddChannel, setShowAddChannel] = useState(false)
 
