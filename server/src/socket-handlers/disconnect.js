@@ -1,10 +1,12 @@
 import { handleTypingEvents } from './typingEvents.js'
+import prisma from '../../prisma/prisma.js'
+import { Status } from '@prisma/client'
 
 /**
  * Handles user disconnection and cleanup of user state
  * Manages room cleanup and broadcasts updated user lists
  */
-export const handleDisconnect = (
+export const handleDisconnect = async (
   socket,
   connectedUsers,
   usersByUserId,
@@ -18,6 +20,11 @@ export const handleDisconnect = (
       console.log(`Socket ${socket.id} disconnected but no user data found`)
       return
     }
+    // Persist the status change to the database
+    await prisma.user.update({
+      where: { id: user.userId },
+      data: { status: Status.OFFLINE },
+    })
 
     const disconnectTimestamp = new Date().toISOString()
 

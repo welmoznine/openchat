@@ -29,7 +29,8 @@ export const authenticateToken = async (req, res, next) => {
       select: {
         id: true,
         email: true,
-        username: true
+        username: true,
+        status: true
       }
     })
 

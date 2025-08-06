@@ -27,6 +27,7 @@ router.get('/me', async (req, res) => {
         updatedAt: true,
       },
     })
+    console.log('User object from database:', user)
     res.json(user)
   } catch (error) {
     console.error('Error in /me:', error)

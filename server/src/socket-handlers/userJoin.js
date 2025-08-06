@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import prisma from '../../prisma/prisma.js'
+import { Status } from '@prisma/client'
 
 /**
  * Handles user joining the chat application
@@ -53,11 +52,25 @@ export const handleUserJoin = async (
 
     const actualChannelName = channelRecord.name
 
+    // Fetch the user's data from the database, including the status field
+    const userFromDb = await prisma.user.update({
+      where: { id: userData.userId },
+      data: {
+        lastLoginAt: new Date(),
+        status: Status.ONLINE,
+      },
+      select: {
+        username: true,
+        status: true,
+      },
+    })
+
     // Create a user object associated with this socket
     const user = {
       id: socket.id,
       username: userData.username,
       userId: userData.userId,
+      status: userFromDb.status,
       currentChannel: userData.channel,
       joinedAt: new Date().toISOString(),
     }
