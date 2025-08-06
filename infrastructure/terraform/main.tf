@@ -194,27 +194,6 @@ resource "google_sql_user" "main" {
 }
 
 # Secret Manager
-resource "google_secret_manager_secret" "db_password" {
-  secret_id = "${var.app_name}-db-password"
-
-  replication {
-    auto {}
-  }
-
-  depends_on = [
-    google_project_service.product_apis,
-    google_project_iam_member.tf_sa_required_roles
-  ]
-}
-
-resource "google_secret_manager_secret_version" "db_password" {
-  secret      = google_secret_manager_secret.db_password.id
-  secret_data = random_password.db_password.result
-
-  lifecycle {
-    ignore_changes = [secret_data]
-  }
-}
 
 resource "google_secret_manager_secret" "database_url" {
   secret_id = "${var.app_name}-database-url"
@@ -264,11 +243,6 @@ resource "google_project_iam_member" "backend_permissions" {
   member  = "serviceAccount:${google_service_account.backend.email}"
 }
 
-resource "google_secret_manager_secret_iam_member" "backend_db_password_accessor" {
-  secret_id = google_secret_manager_secret.db_password.secret_id
-  role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${google_service_account.backend.email}"
-}
 
 resource "google_secret_manager_secret_iam_member" "backend_jwt_secret_accessor" {
   secret_id = google_secret_manager_secret.jwt_secret.secret_id

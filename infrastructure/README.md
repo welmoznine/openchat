@@ -65,8 +65,9 @@ After Terraform creates the resources, manually set the JWT secret:
 # JWT secret
 openssl rand -base64 32 | gcloud secrets versions add openchat-jwt-secret --data-file=-
 
-# DATABASE_URL (automatically created by Terraform)
-# No manual action needed - Cloud Run services read from Secret Manager
+# DATABASE_URL  
+# Get connection values from Terraform outputs  
+terraform output -raw database_url | gcloud secrets versions add openchat-database-url --data-file=-
 ```
 
 ## Outputs
