@@ -6,6 +6,10 @@
 
 An open-source, fully customizable web-based chat platform that bridges the gap between specialized communication tools like Slack and Discord.
 
+## Live Demo
+
+**Production**: https://openchat-frontend-494715638539.us-west1.run.app/
+
 ## Team Members
 
 - **Archie Barash**
