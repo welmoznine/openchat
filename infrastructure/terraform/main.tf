@@ -194,7 +194,6 @@ resource "google_sql_user" "main" {
 }
 
 # Secret Manager
-
 resource "google_secret_manager_secret" "database_url" {
   secret_id = "${var.app_name}-database-url"
 

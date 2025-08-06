@@ -46,14 +46,12 @@ jobs:
           gcloud run deploy openchat-frontend \
             --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/frontend:${{ github.sha }} \
             --region ${{ env.REGION }} \
-            --platform managed \
             --allow-unauthenticated
 
           # Deploy backend
           gcloud run deploy openchat-backend \
             --image ${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/openchat-repo/backend:${{ github.sha }} \
             --region ${{ env.REGION }} \
-            --platform managed \
             --network openchat-vpc \
             --subnet openchat-subnet \
             --vpc-egress all \
