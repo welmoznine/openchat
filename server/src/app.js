@@ -1,5 +1,5 @@
 import express from 'express'
-import { PrismaClient } from '@prisma/client'
+import prisma from '../prisma/prisma.js'
 import authRoutes from './routes/auth.js'
 import userRoutes from './routes/user.js'
 import cors from 'cors'
@@ -9,6 +9,7 @@ import { handleSendMessage } from './socket-handlers/sendMessage.js'
 import { handleDeleteMessage } from './socket-handlers/deleteMessage.js'
 import { handleTypingEvents } from './socket-handlers/typingEvents.js'
 import { handleDisconnect } from './socket-handlers/disconnect.js'
+import { handleStatusUpdate } from './socket-handlers/statusUpdate.js'
 import {
   validateUserData,
   validateMessageData,
@@ -22,7 +23,6 @@ import {
 // Create Express app factory
 export const createApp = () => {
   const app = express()
-  const prisma = new PrismaClient()
 
   app.use(
     cors({
@@ -200,21 +200,14 @@ export const handleSocketConnection = (socket) => {
     timestamp: new Date().toISOString(),
     message: 'Successfully connected to the server'
   })
-  socket.on('status_update', (newStatus) => {
-    const user = connectedUsers.get(socket.id)
-    if (user) {
-      user.status = newStatus // update status
 
-      // Broadcast updated user list to all clients
-      const uniqueUsers = Array.from(usersByUserId.keys()).map(userId => {
-        const socketId = usersByUserId.get(userId)
-        return connectedUsers.get(socketId)
-      }).filter(Boolean)
-
-      console.log('Broadcasting updated users_list:', uniqueUsers)
-
-      socket.broadcast.emit('users_list', uniqueUsers)
-      socket.emit('users_list', uniqueUsers) // also send updated list back to sender
-    }
-  })
+  // ---------- Handle status updates ----------
+  socket.on('status_update', withErrorHandling('status_update', async (newStatus) => {
+    await handleStatusUpdate(
+      socket,
+      newStatus,
+      connectedUsers,
+      getUniqueUsers
+    )
+  }))
 }

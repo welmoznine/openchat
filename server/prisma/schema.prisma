@@ -15,11 +15,12 @@ datasource db {
 
 // ---------------------- ENUMS ----------------------
 
-// Enum to represent user status: offline, online, or away
+// Enum to represent user status: offline, online, busy, or away
 enum Status {
   OFFLINE @map("offline") // Maps to 'offline' in the database
   ONLINE  @map("online")  // Maps to 'online' in the database
   AWAY    @map("away")    // Maps to 'away' in the database
+  BUSY    @map("busy")    // Maps to 'busy' in the database
 }
 
 // ---------------------- MODELS ----------------------

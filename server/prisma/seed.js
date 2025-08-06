@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-
-const prisma = new PrismaClient()
+import prisma from './prisma.js'
 
 async function main () {
   // Upsert test user: create if not exists, otherwise do nothing

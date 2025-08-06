@@ -85,7 +85,7 @@ function ChatPage () {
   // Format data for display
   const formattedMessages = formatMessagesForDisplay(messages, user)
   const currentUserData = formatCurrentUserData(user, socketConnected)
-  const directMessages = formatDirectMessages(connectedUsers, user)
+  const directMessages = formatDirectMessages(connectedUsers, user).filter(dm => dm.user.name !== user.username)
   const onlineMembers = formatOnlineMembers(connectedUsers)
 
   const handleChannelSelect = (channelId) => {

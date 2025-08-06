@@ -124,6 +124,7 @@ router.post('/me', async (req, res) => {
         id: true,
         username: true,
         email: true,
+        status: true,
         lastLoginAt: true
       }
     })

@@ -85,7 +85,7 @@ const Sidebar = ({
         <div className='px-4 py-2 border-t border-slate-700 mt-auto'>
           <h3 className='text-xs text-gray-400 uppercase tracking-wide mb-2'>
             Members Online —{' '}
-            {onlineMembers.filter((m) => m.status === 'online').length}
+            {onlineMembers.filter((m) => m.status !== 'offline').length}
           </h3>
           <div className='space-y-2'>
             {onlineMembers.map((member) => (
