@@ -21,7 +21,6 @@ export const handleUserJoin = async (
       const existingSocket =
         socket.server.sockets.sockets.get(existingSocketId)
       if (existingSocket) {
-        console.log(`Disconnecting existing socket for user ${userData.username}`)
         existingSocket.emit('force_disconnect', {
           reason: 'new_session',
           message: 'You have been logged in from another device'
@@ -112,7 +111,8 @@ export const handleUserJoin = async (
         userId: msg.user.id,
         channel: user.currentChannel,
         timestamp: msg.createdAt.toISOString(),
-        messageType: 'text',
+        messageType: 'channel',
+        isDeleted: msg.isDeleted,
         edited: false,
         reactions: {},
         mentionedUser: msg.mentionedUser

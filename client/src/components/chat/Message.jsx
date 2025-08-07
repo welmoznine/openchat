@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import Avatar from './Avatar'
 import { TrashIcon } from '@heroicons/react/24/outline'
 import DeleteMessageModal from './DeleteMessageModal'
@@ -18,9 +18,12 @@ const Message = ({ message, onDeleteMessage, socket }) => {
 
     try {
       setIsDeleting(true)
-      await onDeleteMessage(message.id)
+      const messageType = message.messageType
+      await onDeleteMessage(message.id, messageType)
+
       setShowDeleteMessageModal(false)
     } catch (error) {
+      console.error('Error deleting message:', error)
     } finally {
       setIsDeleting(false)
     }
@@ -40,6 +43,9 @@ const Message = ({ message, onDeleteMessage, socket }) => {
       </div>
     )
   }
+
+  const isCurrentUser = message.isOwn // Check if the message is owned by the current user
+  const canDelete = isCurrentUser // Only the sender can delete their own message
 
   return (
     <div
@@ -64,7 +70,8 @@ const Message = ({ message, onDeleteMessage, socket }) => {
             </span>
           </div>
 
-          {message.isOwn && (
+          {/* Show delete button only if the message is owned by the current user and not already deleted */}
+          {canDelete && !message.isDeleted && (
             <div className='flex space-x-2 items-center'>
               <button
                 type='button'
@@ -79,7 +86,14 @@ const Message = ({ message, onDeleteMessage, socket }) => {
         </div>
 
         <div className='text-gray-200 break-words'>
-          {message.content}
+          {/* Conditional rendering based on isDeleted flag */}
+          {message.isDeleted
+            ? (
+              <em className='text-gray-500'>This message was deleted.</em>
+              )
+            : (
+              <span>{message.content}</span>
+              )}
         </div>
       </div>
 

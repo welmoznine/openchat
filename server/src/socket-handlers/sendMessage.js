@@ -101,7 +101,7 @@ export const handleSendMessage = async (socket, messageData, connectedUsers) => 
       channel: channelRecord.id,
       channelName: actualChannelName,
       timestamp: savedMessage.createdAt.toISOString(),
-      messageType: messageData.messageType || 'text',
+      messageType: 'channel',
       edited: false,
       reactions: {},
       mentionedUser: savedMessage.mentionedUser
@@ -168,15 +168,7 @@ export const handleSendMessage = async (socket, messageData, connectedUsers) => 
           notificationType: 'channel_message',
         })
       })
-
-      console.log(`Sent notification to ${usersForNotification.length} user(s) in other channels`)
     }
-
-    console.log(
-      `Message from ${user.username} in #${actualChannelName} (Channel ID: ${channelRecord.id}): ${messageText.substring(0, 100)}${
-        messageText.length > 100 ? '...' : ''
-      }`
-    )
   } catch (error) {
     console.error(`Error in handleSendMessage for socket ${socket.id}:`, error)
 

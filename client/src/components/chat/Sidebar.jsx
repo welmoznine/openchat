@@ -10,6 +10,7 @@ const Sidebar = ({
   currentUser,
   channels,
   activeChannel,
+  activeDmId,
   onChannelSelect,
   directMessages,
   onDirectMessageSelect,
@@ -47,7 +48,6 @@ const Sidebar = ({
             </div>
             {showAddChannel && <AddChannelModal showAddChannel={showAddChannel} setShowAddChannel={setShowAddChannel} onChannelUpdate={onChannelUpdate} />}
           </div>
-          <div />
           <div className='space-y-1'>
             {channels.map((channel) => (
               <ChannelItem
@@ -72,10 +72,11 @@ const Sidebar = ({
             <div className='space-y-1'>
               {directMessages.map((dm) => (
                 <DirectMessageItem
-                  key={dm.user.name}
+                  key={dm.user.id}
                   user={dm.user}
                   unreadCount={dm.unreadCount}
-                  onClick={() => onDirectMessageSelect(dm.user.name)}
+                  onClick={() => onDirectMessageSelect(dm.user.id)}
+                  isActive={activeDmId === dm.user.id}
                 />
               ))}
             </div>
@@ -89,7 +90,7 @@ const Sidebar = ({
           </h3>
           <div className='space-y-2'>
             {onlineMembers.map((member) => (
-              <OnlineMember key={member.name} user={member} />
+              <OnlineMember key={member.userId} user={member} />
             ))}
           </div>
         </div>

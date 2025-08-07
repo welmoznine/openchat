@@ -2,18 +2,8 @@ import { useEffect, useState } from 'react'
 
 /**
  * Custom hook to manage socket event listeners related to chat functionality.
- *
- * @param {Socket} socket - The active socket.io connection.
- * @param {Object} user - The current logged-in user.
- * @param {string} activeChannelId - The ID of the currently active chat channel.
- * @param {boolean} socketConnected - Socket connection status flag.
- * @param {Function} appendNewMessage - Function to add new messages to state.
- * @returns {Object} - Contains connected users, typing users, notifications, and setters.
  */
-export const useSocketEvents = (socket, user, activeChannelId, socketConnected, appendNewMessage, refreshChannels) => {
-  // State holding the list of currently connected users
-  const [connectedUsers, setConnectedUsers] = useState([])
-
+export const useSocketEvents = (socket, user, activeChannelId, activeDmId, socketConnected, appendNewMessage, refreshChannels, setConnectedUsers) => {
   // State holding the set of users currently typing in the active channel
   const [typingUsers, setTypingUsers] = useState(new Set())
 
@@ -22,33 +12,23 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
 
   useEffect(() => {
     // Wait until socket, user, and activeChannelId are all available before setting up listeners
-    if (!socket || !user || !activeChannelId) {
-      console.log(
-        'Waiting for socket, user, or activeChannelId to be ready:',
-        { socket: !!socket, user: !!user, activeChannelId: !!activeChannelId }
-      )
+    if (!socket || !user || (!activeChannelId && !activeDmId)) {
       return // Exit early if dependencies are not ready
     }
 
-    console.log('Setting up socket listeners for user:', user.username)
-    console.log('Socket connected status:', socketConnected)
-
-    // Emit 'user_join' event only if socket is connected and activeChannelId is set
-    if (socketConnected) {
-      console.log('Emitting user_join for:', user.username, 'to channel:', activeChannelId)
+    // Emit 'user_join' event only if socket is connected
+    if (socketConnected && activeChannelId) {
       socket.emit('user_join', {
         username: user.username,
         userId: user.id,
-        channel: activeChannelId, // Always provide the current channel
+        channel: activeChannelId,
       })
     }
 
     // Handler for socket connection event
     const onConnect = () => {
-      console.log('Socket connected in ChatPage:', socket.id)
       // Re-emit 'user_join' after reconnect to resync user state with the server
       if (user && activeChannelId) {
-        console.log('Re-emitting user_join on connect for:', user.username, 'to channel:', activeChannelId)
         socket.emit('user_join', {
           username: user.username,
           userId: user.id,
@@ -59,7 +39,6 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
 
     // Handler for socket disconnection event
     const onDisconnect = () => {
-      console.log('Socket disconnected in ChatPage')
     }
 
     // Handler for receiving new messages relevant to the active channel
@@ -78,27 +57,19 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
 
     // Handler confirming the user successfully joined a channel
     const onChannelJoined = (data) => {
-      console.log('Successfully joined channel:', data.channel)
-      if (data.previousChannel) {
-        console.log('Left previous channel:', data.previousChannel)
-      }
     }
 
     // Handler for message notifications from other channels or users
     const onMessageNotification = (notificationData) => {
-      console.log('Received notification:', notificationData)
-
       // Check if notification is from current channel or from self
       const isCurrentChannel = notificationData.channel === activeChannelId
       const isFromSelf = notificationData.username === user.username
 
       if (isFromSelf) {
-        console.log('Skipping notification - message from self')
         return
       }
 
       if (!isCurrentChannel) {
-        console.log('Showing cross-channel notification')
         // Show notification for messages from other channels
         setNotification({
           title: notificationData.title,
@@ -109,14 +80,29 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
       }
     }
 
+    // Handler for DM notifications
+    const onDmNotification = (notificationData) => {
+      // Don't show notification if we are already in a DM with the sender
+      const isCurrentDmActive = notificationData.senderId === activeDmId
+
+      if (!isCurrentDmActive) {
+        setNotification({
+          title: notificationData.title,
+          message: notificationData.message,
+          senderId: notificationData.senderId,
+        })
+      }
+    }
+
     // Handler to update the list of connected users
     const onUsersList = (users) => {
       setConnectedUsers(users)
     }
 
-    // Handler to update the set of users currently typing in the active channel
+    // Handler to update the set of users currently typing
     const onUserTyping = (data) => {
-      if (data.channel === activeChannelId) {
+      // Handle channel typing indicators
+      if (data.channel && data.channel === activeChannelId) {
         setTypingUsers((prev) => {
           const newSet = new Set(prev)
           if (data.isTyping) {
@@ -127,10 +113,25 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
           return newSet
         })
       }
+      // Handle DM typing indicators
+      if (data.messageType === 'direct_message' && data.targetId === user.id && activeDmId) {
+        // This user is being typed to in a DM, and we're currently viewing a DM
+        const isCurrentDM = data.userId === activeDmId // The person typing is the current DM partner
+        if (isCurrentDM) {
+          setTypingUsers((prev) => {
+            const newSet = new Set(prev)
+            if (data.isTyping) {
+              newSet.add(data.username)
+            } else {
+              newSet.delete(data.username)
+            }
+            return newSet
+          })
+        }
+      }
     }
 
     const onChannelRefresh = (channelData) => {
-      console.log('New channel was added: ', channelData)
       refreshChannels()
     }
 
@@ -141,6 +142,7 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
     socket.on('message_sent', onMessageSent)
     socket.on('channel_joined', onChannelJoined)
     socket.on('message_notification', onMessageNotification)
+    socket.on('dm_notification', onDmNotification)
     socket.on('users_list', onUsersList)
     socket.on('user_typing', onUserTyping)
     socket.on('channel_refresh', onChannelRefresh)
@@ -153,14 +155,15 @@ export const useSocketEvents = (socket, user, activeChannelId, socketConnected, 
       socket.off('message_sent', onMessageSent)
       socket.off('channel_joined', onChannelJoined)
       socket.off('message_notification', onMessageNotification)
+      socket.off('dm_notification', onDmNotification)
       socket.off('users_list', onUsersList)
       socket.off('user_typing', onUserTyping)
+      socket.off('channel_refresh', onChannelRefresh)
     }
-  }, [socket, user, socketConnected, activeChannelId, appendNewMessage]) // Re-run effect if these dependencies change
+  }, [socket, user, socketConnected, activeChannelId, activeDmId, appendNewMessage])
 
   // Return current state of connected users, typing users, notification, and setters
   return {
-    connectedUsers,
     typingUsers,
     setTypingUsers,
     notification,

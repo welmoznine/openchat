@@ -25,5 +25,4 @@ io.on('connection', (socket) => handleSocketConnection(socket, io, prisma))
 
 // Start server
 server.listen(PORT, () => {
-  console.log(`HTTP server listening on port ${PORT}`)
 })

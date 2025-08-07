@@ -5,11 +5,14 @@ import userRoutes from './routes/user.js'
 import cors from 'cors'
 import { handleUserJoin } from './socket-handlers/userJoin.js'
 import { handleJoinChannel } from './socket-handlers/joinChannel.js'
+import { handleJoinDM } from './socket-handlers/joinDM.js'
 import { handleSendMessage } from './socket-handlers/sendMessage.js'
 import { handleDeleteMessage } from './socket-handlers/deleteMessage.js'
 import { handleTypingEvents } from './socket-handlers/typingEvents.js'
 import { handleDisconnect } from './socket-handlers/disconnect.js'
 import { handleStatusUpdate } from './socket-handlers/statusUpdate.js'
+import { handleSendDirectMessage, handleGetDirectMessageHistory } from './socket-handlers/sendDirectMessage.js'
+import { handleDeleteDirectMessage } from './socket-handlers/deleteDirectMessage.js'
 import {
   validateUserData,
   validateMessageData,
@@ -134,7 +137,34 @@ export const handleSocketConnection = (socket) => {
     handleSendMessage(socket, messageData, connectedUsers)
   }))
 
-  // ---------- Handle message deletion ----------
+  // ---------- Handle sending direct messages ----------
+  socket.on('send_direct_message', withErrorHandling('send_direct_message', (messageData) => {
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
+    }
+
+    handleSendDirectMessage(socket, messageData, connectedUsers)
+  }))
+
+  // ---------- Handle joining DM rooms and loading history ----------
+  socket.on('join_dm_room', withErrorHandling('join_dm_room', async (data) => {
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
+    }
+
+    // Join the DM room
+    await handleJoinDM(socket, { otherUserId: data.otherUserId }, connectedUsers)
+
+    // Get DM history
+    await handleGetDirectMessageHistory(socket, {
+      otherUserId: data.otherUserId,
+      limit: 50
+    }, connectedUsers)
+  }))
+
+  // ---------- Handle channel message deletion ----------
   socket.on('delete_message', withErrorHandling('delete_message', (deleteData) => {
     const validation = validateDeleteData(deleteData)
     if (!validation.isValid) {
@@ -147,6 +177,21 @@ export const handleSocketConnection = (socket) => {
     }
 
     handleDeleteMessage(socket, deleteData, connectedUsers)
+  }))
+
+  // ---------- Handle direct message deletion ----------
+  socket.on('delete_direct_message', withErrorHandling('delete_direct_message', (deleteData) => {
+    const validation = validateDeleteData(deleteData)
+    if (!validation.isValid) {
+      throw new Error(`Invalid delete data: ${validation.errors.join(', ')}`)
+    }
+
+    const connectionValidation = validateSocketConnection(socket, connectedUsers)
+    if (!connectionValidation.isValid) {
+      throw new Error(connectionValidation.error)
+    }
+
+    handleDeleteDirectMessage(socket, deleteData, connectedUsers)
   }))
 
   // ---------- Handle typing events ----------

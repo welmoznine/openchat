@@ -35,13 +35,11 @@ export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
 
       // Handle successful connection
       socket.on('connect', () => {
-        console.log('Socket connected:', socket.id)
         setIsConnected(true)
       })
 
       // Handle disconnection
       socket.on('disconnect', (reason) => {
-        console.log('Socket disconnected:', reason)
         setIsConnected(false)
       })
 
@@ -55,7 +53,6 @@ export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
 
       // Handle successful reconnection
       socket.on('reconnect', (attemptNumber) => {
-        console.log(`Reconnected after ${attemptNumber} attempts`)
         setIsConnected(true)
       })
 
@@ -69,7 +66,6 @@ export const useSocket = (serverUrl = import.meta.env.VITE_API_BASE_URL) => {
     return () => {
       if (socketRef.current && socketRef.current.connected) {
         socketRef.current.disconnect()
-        console.log('Socket disconnected on unmount')
         setIsConnected(false)
         socketRef.current = null
       }

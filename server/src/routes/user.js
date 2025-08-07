@@ -12,8 +12,6 @@ router.use(authenticateToken)
 // Get the authenticated user's profile from the JWT token
 router.get('/me', async (req, res) => {
   try {
-    console.log('User /me endpoint hit, user:', req.user)
-
     // Query the database for the user by their unique ID from the JWT token
     const user = await prisma.user.findUnique({
       where: { id: req.user.id },
@@ -27,7 +25,6 @@ router.get('/me', async (req, res) => {
         updatedAt: true,
       },
     })
-    console.log('User object from database:', user)
     res.json(user)
   } catch (error) {
     console.error('Error in /me:', error)
@@ -38,8 +35,6 @@ router.get('/me', async (req, res) => {
 // Get all public channels, and also any private channels the user is a member of
 router.get('/channels', async (req, res) => {
   try {
-    console.log('User /channels endpoint hit, user:', req.user)
-
     const channels = await prisma.channel.findMany({
       where: {
         OR: [
@@ -61,9 +56,6 @@ router.get('/channels', async (req, res) => {
       }
     })
 
-    console.log(
-      `Found ${channels.length} accessible channels for ${req.user.username} (ID ${req.user.id})`
-    )
     res.json(channels)
   } catch (error) {
     console.error('Error in /channels:', error)
@@ -228,7 +220,7 @@ router.get('/channels/:channelId/messages', async (req, res) => {
     }
 
     // Build query conditions
-    const whereConditions = { channelId, isDeleted: false }
+    const whereConditions = { channelId }
     if (before) {
       whereConditions.createdAt = { lt: new Date(before) }
     }
@@ -261,12 +253,76 @@ router.get('/channels/:channelId/messages', async (req, res) => {
       userId: msg.userId,
       timestamp: msg.createdAt.toISOString(),
       mentionedUser: msg.mentionedUser,
+      messageType: 'channel',
+      isDeleted: msg.isDeleted
     }))
 
     res.json(formattedMessages)
   } catch (error) {
     console.error('Error fetching channel messages:', error)
     res.status(500).json({ error: 'Failed to fetch messages' })
+  }
+})
+
+// Get direct message history with a specific user
+router.get('/direct-messages/:otherUserId', async (req, res) => {
+  try {
+    const { otherUserId } = req.params
+    const { limit = 50, before } = req.query
+
+    // Verify the other user exists
+    const otherUser = await prisma.user.findUnique({
+      where: { id: otherUserId },
+      select: { id: true, username: true }
+    })
+
+    if (!otherUser) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+
+    // Build query conditions
+    const whereConditions = {
+      OR: [
+        { senderId: req.user.id, receiverId: otherUserId },
+        { senderId: otherUserId, receiverId: req.user.id }
+      ]
+    }
+
+    if (before) {
+      whereConditions.createdAt = { lt: new Date(before) }
+    }
+
+    const messages = await prisma.directMessage.findMany({
+      where: whereConditions,
+      orderBy: { createdAt: 'desc' },
+      take: parseInt(limit),
+      include: {
+        sender: {
+          select: { id: true, username: true }
+        },
+        receiver: {
+          select: { id: true, username: true }
+        }
+      }
+    })
+
+    // Format messages for frontend
+    const formattedMessages = messages.reverse().map((msg) => ({
+      id: msg.id,
+      text: msg.content,
+      username: msg.sender.username,
+      userId: msg.senderId,
+      receiverUserId: msg.receiverId,
+      receiverUsername: msg.receiver.username,
+      timestamp: msg.createdAt.toISOString(),
+      messageType: 'direct_message',
+      isDeleted: msg.isDeleted
+    }))
+
+    res.json(formattedMessages)
+  } catch (error) {
+    console.error('Error fetching direct messages:', error)
+    res.status(500).json({ error: 'Failed to fetch direct messages' })
   }
 })
 
@@ -355,7 +411,6 @@ router.delete('/messages/:messageId', async (req, res) => {
 
     // If message is already deleted
     if (message.isDeleted) {
-      console.log(`Message ${messageId} already deleted`)
       return res.json({
         success: true,
         messageId,
@@ -385,6 +440,66 @@ router.delete('/messages/:messageId', async (req, res) => {
     })
   } catch (error) {
     console.error('Error deleting message:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// Delete a direct message (soft delete)
+router.delete('/direct-messages/:messageId', async (req, res) => {
+  try {
+    const { messageId } = req.params
+    const userId = req.user.id
+
+    // Find the direct message and verify ownership
+    const directMessage = await prisma.directMessage.findUnique({
+      where: { id: messageId },
+      include: {
+        sender: {
+          select: { id: true, username: true }
+        },
+        receiver: {
+          select: { id: true, username: true }
+        }
+      }
+    })
+
+    if (!directMessage) {
+      return res.status(404).json({ error: 'Direct message not found' })
+    }
+
+    // If message is already deleted
+    if (directMessage.isDeleted) {
+      return res.json({
+        success: true,
+        messageId,
+        senderId: directMessage.senderId,
+        receiverId: directMessage.receiverId,
+        alreadyDeleted: true
+      })
+    }
+
+    // Check if user is the sender (only sender can delete their own DM)
+    if (directMessage.senderId !== userId) {
+      return res.status(403).json({ error: 'You can only delete your own direct messages' })
+    }
+
+    // Soft delete the direct message
+    await prisma.directMessage.update({
+      where: { id: messageId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date()
+      }
+    })
+
+    res.json({
+      success: true,
+      messageId,
+      senderId: directMessage.senderId,
+      receiverId: directMessage.receiverId
+    })
+  } catch (error) {
+    console.error('Error deleting direct message:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

@@ -59,8 +59,6 @@ export const handleJoinChannel = async (socket, channelData, connectedUsers) => 
         // Use ID if name lookup fails
       }
 
-      console.log(`${user.username} (ID: ${user.userId}) has left channel #${previousChannelName}`)
-
       // Notify others in the previous channel that user left
       socket.to(previousChannel).emit('user_channel_left', {
         username: user.username,
@@ -69,6 +67,13 @@ export const handleJoinChannel = async (socket, channelData, connectedUsers) => 
         newChannel: newChannelId,
         timestamp: new Date().toISOString(),
       })
+    }
+
+    // Clean up any active DM room when joining a channel
+    if (user.currentDMRoom) {
+      socket.leave(user.currentDMRoom)
+      user.currentDMRoom = null
+      user.currentDM = null
     }
 
     // Join the new channel room and update the user's current channel
@@ -106,7 +111,8 @@ export const handleJoinChannel = async (socket, channelData, connectedUsers) => 
         userId: msg.user.id,
         channel: newChannelId,
         timestamp: msg.createdAt.toISOString(),
-        messageType: 'text',
+        messageType: 'channel',
+        isDeleted: msg.isDeleted,
         edited: false,
         reactions: {},
         mentionedUser: msg.mentionedUser
@@ -127,8 +133,6 @@ export const handleJoinChannel = async (socket, channelData, connectedUsers) => 
       console.error(`Error fetching message history for ${actualChannelName}:`, historyError)
       // Continue with channel join even if history fetch fails
     }
-
-    console.log(`${user.username} (ID: ${user.userId}) has joined channel #${actualChannelName}`)
 
     // Notify the client that the switch succeeded
     socket.emit('channel_joined', {
