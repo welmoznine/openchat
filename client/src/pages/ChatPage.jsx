@@ -1,5 +1,5 @@
 // Import React hooks
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Import custom hooks and context for user and auth management
 import { useUser } from '../contexts/UserContext'
@@ -14,6 +14,9 @@ import { useSocketEvents } from '../hooks/sockets/useSocketEvents'
 import { useMessageInput } from '../hooks/messages/useMessageInput'
 import { useNotifications } from '../hooks/messages/useNotifications'
 import { useScrollToBottom } from '../hooks/messages/useScrollToBottom'
+import { useActiveDirectMessage } from '../hooks/messages/useActiveDirectMessage'
+import { useDirectMessages } from '../hooks/messages/useDirectMessages'
+import { useDeleteMessages } from '../hooks/messages/useDeleteMessages'
 
 // Import utility functions
 import {
@@ -34,11 +37,14 @@ function ChatPage () {
   // State variables
   const [showSidebar, setShowSidebar] = useState(false) // Sidebar toggle
   const [userStatus, setUserStatus] = useState('Online') // default lower-case
+  const [connectedUsers, setConnectedUsers] = useState([])
 
   // Hooks
   const user = useUser() // Get user from context
   const logout = useLogout() // Get logout function
   const { socket, isConnected: socketConnected } = useSocket() // Get socket and connection status
+  const { deleteMessage: apiDeleteMessage } = useDeleteMessages()
+
   const {
     channels,
     loading: channelsLoading,
@@ -46,35 +52,53 @@ function ChatPage () {
     refreshChannels,
   } = useUserChannels() // Custom hook for channels
 
-  // Active channel management
-  const { activeChannelId, setActiveChannelId, activeChannel } = useActiveChannel(channels)
-  console.log('Current user:', user)
-  console.log('Channels:', channels)
-  console.log('Active Channel ID:', activeChannelId)
-  console.log('Socket connected:', socketConnected)
+  const { activeDmId, setActiveDmId, activeDmUser } = useActiveDirectMessage(connectedUsers, user?.id) // Active DM management
+
+  const { activeChannelId, setActiveChannelId, activeChannel } = useActiveChannel(channels, activeDmId) // Active channel management
   const {
     messages,
     loading: msgLoading,
     error: msgError,
     appendNewMessage,
-    deleteMessage,
   } = useChannelMessages(activeChannelId, socket) // Custom hook for messages in the active channel
 
   // Socket events management
   const {
-    connectedUsers,
     typingUsers,
     setTypingUsers,
     notification,
     setNotification
-  } = useSocketEvents(socket, user, activeChannelId, socketConnected, appendNewMessage, refreshChannels)
+  } = useSocketEvents(
+    socket,
+    user,
+    activeChannelId,
+    activeDmId,
+    socketConnected,
+    appendNewMessage,
+    refreshChannels,
+    setConnectedUsers
+  )
+
+  const {
+    messages: dmMessages,
+  } = useDirectMessages(activeDmId, socket) // Custom hook for direct messages
+
+  const isDMActive = activeDmId !== null
+
+  // Select the correct messages, loading state, and error
+  const currentMessages = isDMActive ? dmMessages : messages // 'messages' comes from useChannelMessages
+
+  // Select the correct chat name and placeholder for the UI
+  const chatName = isDMActive ? activeDmUser?.username : activeChannel?.name
+  const chatDescription = isDMActive ? `Direct Message with ${activeDmUser?.username}` : activeChannel?.description
+  const inputPlaceholder = isDMActive ? `Message ${activeDmUser?.username}` : `Message #${activeChannel?.name}`
 
   // Message input management
   const {
     currentMessage,
     handleSendMessage,
     handleInputChange
-  } = useMessageInput(socket, activeChannelId)
+  } = useMessageInput(socket, activeChannelId, activeDmId)
 
   // Notification management
   const { handleCloseNotification } = useNotifications(notification, setNotification)
@@ -83,16 +107,24 @@ function ChatPage () {
   const { messagesEndRef } = useScrollToBottom(messages)
 
   // Format data for display
-  const formattedMessages = formatMessagesForDisplay(messages, user)
+  const formattedMessages = formatMessagesForDisplay(currentMessages, user)
   const currentUserData = formatCurrentUserData(user, socketConnected)
-  const directMessages = formatDirectMessages(connectedUsers, user).filter(dm => dm.user.name !== user.username)
+  const directMessages = formatDirectMessages(connectedUsers, user)
   const onlineMembers = formatOnlineMembers(connectedUsers)
 
-  const handleChannelSelect = (channelId) => {
-    console.log('Switching from', activeChannelId, 'to', channelId)
+  // Handle message deletion
+  const handleDeleteMessage = async (messageId, messageType) => {
+    try {
+      await apiDeleteMessage(messageId, messageType)
+    } catch (error) {
+      console.error('Failed to delete message:', error)
+    }
+  }
 
-    // Clear typing indicators when switching channels
+  const handleChannelSelect = (channelId) => {
+    // Clear typing indicators and active DM when switching channels
     setTypingUsers(new Set())
+    setActiveDmId(null)
 
     // Update active channel
     setActiveChannelId(channelId)
@@ -103,13 +135,21 @@ function ChatPage () {
     }
   }
 
-  const handleDirectMessageSelect = (userName) => {
-    // Handle DM selection - you can implement private messaging here
-    console.log('Opening DM with:', userName)
+  const handleDirectMessageSelect = (userId) => {
+    // Clear active channel when switching to a DM
+    setActiveChannelId(null)
+
+    // Update the active DM ID
+    setActiveDmId(userId)
+
+    // Notify the server about DM switch
+    if (socket) {
+      socket.emit('join_dm_room', { otherUserId: userId })
+    }
   }
 
   const handleStatusChange = (newStatus) => {
-    setUserStatus(newStatus) // Update local state to reflect immediately in UI
+    setUserStatus(newStatus)
     if (socket && socket.connected) {
       socket.emit('status_update', newStatus)
     }
@@ -177,6 +217,7 @@ function ChatPage () {
             currentUser={currentUserData}
             channels={channels}
             activeChannel={activeChannel?.id || null}
+            activeDmId={activeDmId}
             onChannelSelect={handleChannelSelect}
             directMessages={directMessages}
             onDirectMessageSelect={handleDirectMessageSelect}
@@ -192,15 +233,15 @@ function ChatPage () {
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>
           <ChatHeader
-            channelName={activeChannel?.name || 'general'}
-            description={activeChannel?.description || ''}
+            channelName={chatName || ''}
+            description={chatDescription || ''}
             isConnected={socketConnected}
             toggleSidebar={toggleSidebar}
           />
 
           <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
             {formattedMessages.map((message) => (
-              <Message key={message.id} message={message} onDeleteMessage={deleteMessage} socket={socket} />
+              <Message key={message.id} message={message} onDeleteMessage={handleDeleteMessage} socket={socket} />
             ))}
 
             {/* Typing indicators */}
@@ -230,7 +271,7 @@ function ChatPage () {
             onSendMessage={handleSendMessage}
             onInputChange={handleInputChange}
             isConnected={socketConnected}
-            placeholder={`Message #${activeChannel?.name || 'general'}`}
+            placeholder={inputPlaceholder}
           />
         </div>
 

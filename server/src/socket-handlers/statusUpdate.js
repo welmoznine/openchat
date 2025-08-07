@@ -15,7 +15,6 @@ export const handleStatusUpdate = async (
   // Update the user's in-memory status
   const normalizedStatus = newStatus.toLowerCase()
   user.status = normalizedStatus
-  console.log(`Updated status for user ${user.username} to ${normalizedStatus}`)
 
   // Persist the status change to the database
   const statusEnumMap = {

@@ -150,7 +150,7 @@ export const formatMessage = (messageData, user) => {
     userId: user.userId,
     channel: messageData.channel || user.currentChannel,
     timestamp: new Date().toISOString(),
-    messageType: messageData.messageType || 'text',
+    messageType: messageData.messageType,
     reactions: {},
   }
 }
@@ -162,7 +162,6 @@ export const formatMessage = (messageData, user) => {
  */
 export const logSocketEvent = (event, socketId) => {
   const timestamp = new Date().toISOString()
-  console.log(`[${timestamp}] ${event} (Socket ID: ${socketId})`)
 }
 
 /**
@@ -188,8 +187,6 @@ export const createTypingTimeout = (socket, user, channel, timeout = 5000) => {
 
       user.isTyping = false
       user.typingInChannel = null
-
-      console.log(`Auto-stopped typing for ${user.username} in #${channel} due to timeout`)
     }
   }, timeout)
 }

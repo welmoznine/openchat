@@ -72,8 +72,6 @@ export const handleDeleteMessage = async (socket, deleteData, connectedUsers) =>
 
     // Confirm deletion to sender
     socket.emit('message_delete_success', deleteResponse)
-
-    console.log(`Message (ID ${messageId}) deleted by ${user.username} in channel ${message.channel.name}`)
   } catch (error) {
     console.error(`Error in handleDeleteMessage for socket ${socket.id}:`, error)
 

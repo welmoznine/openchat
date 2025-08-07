@@ -10,6 +10,7 @@ import { formatTimestamp, generateUserInitials, generateUserColor } from './chat
 export const formatMessagesForDisplay = (messages, user) => {
   return messages.map((message) => ({
     id: message.id, // Preserve message ID
+    messageType: message.messageType, // Preserve message type
     user: {
       name: message.username, // Original username of the message sender
       initials: generateUserInitials(message.username || 'SY'), // Fallback to 'SY' if no username
@@ -21,6 +22,7 @@ export const formatMessagesForDisplay = (messages, user) => {
     content: message.text, // Message content
     isSystem: message.isSystem, // Boolean flag for system messages
     isOwn: message.username === user?.username, // True if message was sent by current user
+    isDeleted: message.isDeleted, // Boolean flag for deleted messages
   }))
 }
 
@@ -51,16 +53,16 @@ export const formatCurrentUserData = (user, socketConnected, userStatus) => {
  */
 export const formatDirectMessages = (connectedUsers, user) => {
   return connectedUsers
-    // Filter out the current user from the list
-    .filter((connectedUser) => connectedUser.id !== user?.id)
+    .filter(connectedUser => connectedUser && connectedUser.userId !== user?.id)
     .map((connectedUser) => ({
       user: {
-        name: connectedUser.username, // Name of the other user
-        initials: generateUserInitials(connectedUser.username), // Initials from username
-        bgColor: generateUserColor(connectedUser.username), // Background color from username
-        status: connectedUser.status?.toLowerCase() || 'Online', // Assume all connected users are online
+        id: connectedUser.userId,
+        name: connectedUser.username,
+        initials: generateUserInitials(connectedUser.username),
+        bgColor: generateUserColor(connectedUser.username),
+        status: connectedUser.status?.toLowerCase() || 'Online',
       },
-      unreadCount: 0, // Default unread message count
+      unreadCount: 0,
     }))
 }
 
@@ -71,10 +73,23 @@ export const formatDirectMessages = (connectedUsers, user) => {
  * @returns {Array} - List of formatted online member objects.
  */
 export const formatOnlineMembers = (connectedUsers) => {
-  return connectedUsers.map((connectedUser) => ({
-    name: connectedUser.username, // User's name
-    initials: generateUserInitials(connectedUser.username), // User initials
-    bgColor: generateUserColor(connectedUser.username), // User background color
-    status: connectedUser.status?.toLowerCase() || 'Online', // All listed users are online
-  }))
+  if (!Array.isArray(connectedUsers)) {
+    return []
+  }
+
+  return connectedUsers
+    .filter(connectedUser => {
+      return connectedUser &&
+             connectedUser.userId &&
+             connectedUser.username &&
+             connectedUser.userId.trim() !== ''
+    })
+    .map((connectedUser) => ({
+      id: connectedUser.userId,
+      userId: connectedUser.userId, // Keep both for compatibility
+      name: connectedUser.username,
+      initials: generateUserInitials(connectedUser.username),
+      bgColor: generateUserColor(connectedUser.username),
+      status: connectedUser.status?.toLowerCase() || 'online',
+    }))
 }

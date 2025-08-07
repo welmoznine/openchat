@@ -1,40 +1,48 @@
 import { useState } from 'react'
 
-export function useDeleteMessages () {
+export const useDeleteMessages = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const deleteMessage = async (messageId) => {
+  const deleteMessage = async (messageId, messageType) => {
     setLoading(true)
     setError(null)
 
-    // Retrieve the auth token from local storage
     const token = localStorage.getItem('token')
 
+    // Determine the correct endpoint based on message type
+    const endpoint = messageType === 'direct_message'
+      ? `/api/user/direct-messages/${messageId}`
+      : `/api/user/messages/${messageId}`
+
     try {
-      // Make the DELETE request to the API endpoint
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/user/messages/${messageId}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+          'Content-Type': 'application/json',
+        },
       })
 
-      if (!res.ok) {
-        const data = await res.json()
-        throw new Error(data.error || 'Failed to delete message')
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `Error ${response.status}`)
       }
 
-      // Return the successful response data
-      const data = await res.json()
-      return data
+      const result = await response.json()
+      return result
     } catch (err) {
+      console.error('Delete message error:', err)
       setError(err.message)
+      throw err
     } finally {
       setLoading(false)
     }
   }
 
-  return { deleteMessage, loading, error }
+  return {
+    deleteMessage,
+    loading,
+    error
+  }
 }

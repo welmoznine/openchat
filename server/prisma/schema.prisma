@@ -52,7 +52,9 @@ model DirectMessage {
   senderId   String   @map("sender_id")                   // FK to sender user ID
   receiverId String   @map("receiver_id")                 // FK to receiver user ID
   content    String                                       // Message content
+  isDeleted  Boolean  @default(false) @map("is_deleted") // Soft delete flag
   createdAt  DateTime @default(now()) @map("created_at")  // Timestamp
+  deletedAt  DateTime? @map("deleted_at")                 // Timestamp when message was deleted
 
   sender      User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)       // DM sender (cascades on user deletion)
   receiver    User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade) // DM receiver (cascades on user deletion)

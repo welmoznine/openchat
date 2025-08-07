@@ -16,12 +16,19 @@ export default function DeleteMessageModal ({
     e.preventDefault()
 
     try {
-      // Call the deleteMessage function with the message ID
-      await deleteMessage(message.id)
+      // Determine message type from the message object
+      const messageType = message.messageType
 
-      // Emit the delete event
+      // Call the deleteMessage function with the message ID and type
+      await deleteMessage(message.id, messageType)
+
+      // Emit the appropriate delete event based on message type
       if (socket) {
-        socket.emit('delete_message', { messageId: message.id })
+        if (messageType === 'direct_message') {
+          socket.emit('delete_direct_message', { messageId: message.id })
+        } else {
+          socket.emit('delete_message', { messageId: message.id })
+        }
       }
 
       // Close the modal

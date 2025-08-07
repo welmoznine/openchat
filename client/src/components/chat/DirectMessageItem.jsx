@@ -1,8 +1,12 @@
 // src/components/chat/DirectMessageItem.jsx
 import Avatar from './Avatar'
 
-const DirectMessageItem = ({ user, unreadCount = 0, onClick }) => (
-  <div className='flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-slate-700' onClick={onClick}>
+const DirectMessageItem = ({ user, unreadCount = 0, onClick, isActive }) => (
+  <div
+    className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer hover:bg-slate-700 ${
+    isActive ? 'bg-slate-800 text-white font-semibold' : 'text-gray-300'
+  }`} onClick={onClick}
+  >
     <div className='flex items-center space-x-2 min-w-0 flex-1'>
       <Avatar
         initials={user.initials}

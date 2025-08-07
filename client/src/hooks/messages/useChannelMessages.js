@@ -80,36 +80,17 @@ export const useChannelMessages = (channelId, socket) => {
   }, [])
 
   /**
-   * Removes a message from the messages list (for soft deletes).
+   * Marks a message as deleted in the messages list (for soft deletes).
    *
-   * @param {string} messageId - The ID of the message to delete.
+   * @param {string} messageId - The ID of the message to mark as deleted.
    */
   const deleteMessage = useCallback((messageId) => {
-    // Check if message is already being deleted
-    if (deletingMessages.has(messageId)) {
-      console.log(`Message ${messageId} is already being deleted, skipping...`)
-      return Promise.resolve() // Return resolved promise to prevent errors
-    }
-
-    // Add to deleting set
-    setDeletingMessages(prev => new Set(prev).add(messageId))
-
-    // Remove from messages immediately for optimistic update
     setMessages((prevMessages) =>
-      prevMessages.filter((msg) => msg.id !== messageId)
+      prevMessages.map((msg) =>
+        msg.id === messageId ? { ...msg, isDeleted: true, content: 'This message was deleted.' } : msg
+      )
     )
-
-    // Remove from deleting set after a delay
-    setTimeout(() => {
-      setDeletingMessages(prev => {
-        const newSet = new Set(prev)
-        newSet.delete(messageId)
-        return newSet
-      })
-    }, 1000)
-
-    return Promise.resolve()
-  }, [deletingMessages])
+  }, [])
 
   // Socket event listeners for real-time updates
   useEffect(() => {
@@ -117,7 +98,6 @@ export const useChannelMessages = (channelId, socket) => {
 
     // Listen for message deletion events
     const handleMessageDeleted = (deleteData) => {
-      console.log('Message deleted event received:', deleteData)
       if (deleteData.channelId === channelId) {
         deleteMessage(deleteData.messageId)
       }
@@ -125,7 +105,6 @@ export const useChannelMessages = (channelId, socket) => {
 
     // Listen for delete success
     const handleDeleteSuccess = (deleteData) => {
-      console.log('Delete success received:', deleteData)
       if (deleteData.channelId === channelId) {
         deleteMessage(deleteData.messageId)
       }
@@ -139,12 +118,9 @@ export const useChannelMessages = (channelId, socket) => {
       if (!errorData.error?.includes('already deleted')) {
         setError(`Failed to delete message: ${errorData.error}`)
       } else {
-        console.log('Message already deleted')
         // Still remove from UI if it exists
         if (errorData.messageId) {
-          setMessages(prevMessages =>
-            prevMessages.filter(msg => msg.id !== errorData.messageId)
-          )
+          deleteMessage(errorData.messageId) // Use the soft-delete function
         }
       }
 

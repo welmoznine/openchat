@@ -71,7 +71,6 @@ const UserProfile = ({ user, onLogout, isConnected, toggleSidebar, currentStatus
                     <button
                       key={option.label}
                       onClick={() => {
-                        console.log('Status changed to:', option.label)
                         onStatusChange(option.label)
                         setShowStatusDropdown(false)
                         setMenuOpen(false)

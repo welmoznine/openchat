@@ -17,7 +17,6 @@ export const handleDisconnect = async (
 
     // If user doesn't exist, log and return early
     if (!user) {
-      console.log(`Socket ${socket.id} disconnected but no user data found`)
       return
     }
     // Persist the status change to the database
@@ -30,6 +29,30 @@ export const handleDisconnect = async (
 
     // Clean up typing status if user was typing
     handleTypingEvents.cleanupTypingStatus(socket, user, connectedUsers)
+
+    // Clean up DM room state
+    if (user.currentDMRoom) {
+      socket.leave(user.currentDMRoom)
+
+      // Notify DM partner that user left
+      if (user.currentDM) {
+        const partnerSocketId = Array.from(connectedUsers.entries())
+          .find(([_, userData]) => userData.userId === user.currentDM)?.[0]
+
+        if (partnerSocketId) {
+          socket.to(partnerSocketId).emit('dm_partner_left', {
+            partnerUserId: user.userId,
+            partnerUsername: user.username,
+            dmRoom: user.currentDMRoom,
+            timestamp: disconnectTimestamp,
+            reason: 'disconnected'
+          })
+        }
+      }
+
+      user.currentDMRoom = null
+      user.currentDM = null
+    }
 
     // Leave the current channel room
     if (user.currentChannel) {
@@ -75,11 +98,6 @@ export const handleDisconnect = async (
     })
 
     // Log disconnect information
-    console.log(
-      `${userInfo.username} (ID: ${userInfo.userId}) disconnected from #${userInfo.currentChannel}. ` +
-      `Session duration: ${userInfo.sessionDuration}s. ` +
-      `Active users remaining: ${uniqueUsers.length}`
-    )
   } catch (error) {
     console.error(`Error handling disconnect for socket ${socket.id}:`, error)
 

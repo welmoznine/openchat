@@ -11,29 +11,46 @@ const handleTypingStart = (socket, data, connectedUsers) => {
       throw new Error('User not found in connected users')
     }
 
-    // Use the channel from data or fallback to user's current channel
-    const channel = data?.channel || user.currentChannel
+    const { messageType, targetId } = data
 
-    // Validate channel
-    if (!channel) {
-      throw new Error('No channel specified for typing event')
+    if (!targetId || !messageType) {
+      throw new Error('Target ID and message type are required for typing event')
     }
 
-    // Update user's typing status (optional - for tracking)
+    // Update user's typing status
     user.isTyping = true
-    user.typingInChannel = channel
     user.typingStartedAt = new Date().toISOString()
 
-    // Notify other users in the same channel that this user is typing
-    socket.to(channel).emit('user_typing', {
-      username: user.username,
-      userId: user.userId,
-      channel,
-      isTyping: true,
-      timestamp: user.typingStartedAt,
-    })
-
-    console.log(`${user.username} is typing`)
+    if (messageType === 'channel') {
+      const channelId = targetId
+      user.typingInChannel = channelId
+      // Emit to channel with the structure the client expects
+      socket.to(channelId).emit('user_typing', {
+        username: user.username,
+        userId: user.userId,
+        channel: channelId, // Client expects 'channel' property
+        isTyping: true,
+        timestamp: user.typingStartedAt,
+      })
+    } else if (messageType === 'direct_message') {
+      const otherUserId = targetId
+      const dmRoom = [user.userId, otherUserId].sort().join('-')
+      user.typingInDM = otherUserId
+      // Make sure user is in the DM room
+      socket.join(dmRoom)
+      // Emit to DM room with consistent structure
+      socket.to(dmRoom).emit('user_typing', {
+        username: user.username,
+        userId: user.userId,
+        messageType: 'direct_message',
+        targetId: otherUserId,
+        dmRoom: dmRoom,
+        isTyping: true,
+        timestamp: user.typingStartedAt,
+      })
+    } else {
+      throw new Error(`Unsupported message type for typing event: ${messageType}`)
+    }
   } catch (error) {
     console.error(`Error in handleTypingStart for socket ${socket.id}:`, error)
 
@@ -57,34 +74,49 @@ const handleTypingStop = (socket, data, connectedUsers) => {
     // Get the user associated with this socket
     const user = connectedUsers.get(socket.id)
 
-    // Double-check if the user exists (should be caught by validation in main handler)
+    // Double-check if the user exists
     if (!user) {
       throw new Error('User not found in connected users')
     }
 
-    // Use the channel from data or fallback to user's current channel
-    const channel = data?.channel || user.currentChannel
+    const { messageType, targetId } = data
 
-    // Validate channel
-    if (!channel) {
-      throw new Error('No channel specified for typing event')
+    if (!targetId || !messageType) {
+      throw new Error('Target ID and message type are required for typing event')
     }
 
-    // Update user's typing status (optional - for tracking)
+    // Update user's typing status
     user.isTyping = false
-    user.typingInChannel = null
     user.typingStoppedAt = new Date().toISOString()
 
-    // Notify other users in the same channel that this user stopped typing
-    socket.to(channel).emit('user_typing', {
-      username: user.username,
-      userId: user.userId,
-      channel,
-      isTyping: false,
-      timestamp: user.typingStoppedAt,
-    })
-
-    console.log(`${user.username} stopped typing`)
+    if (messageType === 'channel') {
+      const channelId = targetId
+      user.typingInChannel = null
+      // Emit to channel with the structure the client expects
+      socket.to(channelId).emit('user_typing', {
+        username: user.username,
+        userId: user.userId,
+        channel: channelId, // Client expects 'channel' property
+        isTyping: false,
+        timestamp: user.typingStoppedAt,
+      })
+    } else if (messageType === 'direct_message') {
+      const otherUserId = targetId
+      const dmRoom = [user.userId, otherUserId].sort().join('-')
+      user.typingInDM = null
+      // Emit to DM room
+      socket.to(dmRoom).emit('user_typing', {
+        username: user.username,
+        userId: user.userId,
+        messageType: 'direct_message',
+        targetId: otherUserId,
+        dmRoom: dmRoom,
+        isTyping: false,
+        timestamp: user.typingStoppedAt,
+      })
+    } else {
+      throw new Error(`Unsupported message type for typing event: ${messageType}`)
+    }
   } catch (error) {
     console.error(`Error in handleTypingStop for socket ${socket.id}:`, error)
 
@@ -105,22 +137,43 @@ const handleTypingStop = (socket, data, connectedUsers) => {
  */
 const cleanupTypingStatus = (socket, user, connectedUsers) => {
   try {
-    if (user && user.isTyping && user.typingInChannel) {
-      // Notify others that user stopped typing due to disconnect/channel change
-      socket.to(user.typingInChannel).emit('user_typing', {
-        username: user.username,
-        userId: user.userId,
-        channel: user.typingInChannel,
-        isTyping: false,
-        timestamp: new Date().toISOString(),
-        reason: 'user_disconnected',
-      })
+    if (user && user.isTyping) {
+      const timestamp = new Date().toISOString()
 
-      // Update user status
+      // Clean up channel typing
+      if (user.typingInChannel) {
+        socket.to(user.typingInChannel).emit('user_typing', {
+          username: user.username,
+          userId: user.userId,
+          channel: user.typingInChannel,
+          isTyping: false,
+          timestamp: timestamp,
+          reason: 'user_disconnected',
+        })
+
+        user.typingInChannel = null
+      }
+
+      // Clean up DM typing
+      if (user.typingInDM) {
+        const dmRoom = [user.userId, user.typingInDM].sort().join('-')
+
+        socket.to(dmRoom).emit('user_typing', {
+          username: user.username,
+          userId: user.userId,
+          messageType: 'direct_message',
+          targetId: user.typingInDM,
+          dmRoom: dmRoom,
+          isTyping: false,
+          timestamp: timestamp,
+          reason: 'user_disconnected',
+        })
+
+        user.typingInDM = null
+      }
+
+      // Reset typing state
       user.isTyping = false
-      user.typingInChannel = null
-
-      console.log(`Cleaned up typing status for ${user.username}`)
     }
   } catch (error) {
     console.error('Error cleaning up typing status:', error)
