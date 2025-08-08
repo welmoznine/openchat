@@ -141,7 +141,7 @@ resource "google_sql_database_instance" "main" {
   region           = var.region
 
   settings {
-    tier              = "db-custom-1-3840"
+    tier              = "db-g1-small"
     availability_type = "REGIONAL"
     disk_type         = "PD_SSD"
     disk_size         = 20
