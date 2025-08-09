@@ -89,9 +89,20 @@ const Sidebar = ({
             {onlineMembers.filter((m) => m.status !== 'offline').length}
           </h3>
           <div className='space-y-2'>
-            {onlineMembers.map((member) => (
-              <OnlineMember key={member.userId} user={member} />
-            ))}
+            {onlineMembers
+              .slice()
+              .sort((a, b) => {
+                const statusPriority = {
+                  online: 1,
+                  away: 2,
+                  busy: 3,
+                  offline: 4
+                }
+                return statusPriority[a.status] - statusPriority[b.status]
+              })
+              .map((member) => (
+                <OnlineMember key={member.userId} user={member} />
+              ))}
           </div>
         </div>
       </div>
