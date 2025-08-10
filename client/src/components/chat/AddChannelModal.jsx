@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useAddChannel } from '../../hooks/channels/useAddChannel'
 
 /**
@@ -23,11 +24,11 @@ export default function AddChannelModal ({ showAddChannel, setShowAddChannel, on
   // Close modal on Escape key press
   useEffect(() => {
     const handleEsc = (e) => {
-      if (e.key === 'Escape') setShowAddChannel(false)
+      if (e.key === 'Escape') handleClose()
     }
     document.addEventListener('keydown', handleEsc)
     return () => document.removeEventListener('keydown', handleEsc)
-  }, [setShowAddChannel])
+  }, [])
 
   /**
     * Handles form submission. Prevents page reload,
@@ -46,70 +47,102 @@ export default function AddChannelModal ({ showAddChannel, setShowAddChannel, on
 
     addChannel(channelData).then(() => {
       setShowAddChannel(false)
+      setChannelName('')
+      setChannelDescription('')
+      setIsPrivate(false)
       onChannelUpdate()
     })
+  }
+
+  const handleClose = () => {
+    setShowAddChannel(false)
+    setChannelName('')
+    setChannelDescription('')
+    setIsPrivate(false)
   }
 
   if (!showAddChannel) return null
 
   return (
-    <div className='fixed inset-0 z-50 flex items-start pt-50 justify-center'>
-      {/* Overlay */}
-      <div
-        className='absolute inset-0 bg-black/20 backdrop-blur-xs'
-        onClick={() => setShowAddChannel(false)} // <-- wrapped in function
-      />
-      {/* Modal Content */}
-      <div className='relative z-50 bg-slate-800 border border-slate-600 rounded-lg shadow-2xl w-100 py-4 px-6'>
-        <h2 className='text-white text-lg mb-4'>Add Channel</h2>
-        <form onSubmit={onSubmit}>
-          <div>
-            <label className='block text-sm font-medium mb-1' htmlFor='channel-name'>
-              Name
-            </label>
-            <input
-              id='channel-name'
-              type='text'
-              value={channelName}
-              onChange={(e) => setChannelName(e.target.value)}
-              required
-              autoComplete='off'
-              className='w-full px-3 py-2 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:ring focus:ring-slate-500'
-            />
-          </div>
-          <div>
-            <label className='block text-sm font-medium mt-5 mb-1' htmlFor='channel-name'>
-              Description
-            </label>
-            <input
-              id='channel-description'
-              type='text'
-              value={channelDescription}
-              onChange={(e) => setChannelDescription(e.target.value)}
-              required
-              autoComplete='off'
-              className='w-full px-3 py-2 rounded bg-slate-700 text-white border border-slate-600 focus:outline-none focus:ring focus:ring-slate-500'
-            />
-          </div>
-          <div className='flex items-center space-x-2 mt-5'>
-            <input
-              id='is-private'
-              type='checkbox'
-              checked={isPrivate}
-              onChange={() => setIsPrivate((prev) => !prev)}
-              className='h-4 w-4 text-slate-500 bg-slate-600 border-gray-500 focus:ring-slate-500'
-            />
-            <label htmlFor='is-private' className='text-sm'>
-              Private Channel
-            </label>
-          </div>
+    <div className='fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 bg-black/20 backdrop-blur-xs'>
+      <div className='bg-slate-800 rounded-lg w-full max-w-md mx-4 flex flex-col'>
+        {/* Header */}
+        <div className='flex items-center justify-between p-4 border-b border-slate-700'>
+          <h2 className='text-lg font-semibold text-white'>Add Channel</h2>
           <button
-            type='submit'
-            className='w-full mt-5 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2 px-4 rounded'
+            onClick={handleClose}
+            className='text-gray-400 hover:text-white transition-colors'
           >
-            Create Channel
+            <XMarkIcon className='w-6 h-6' />
           </button>
-        </form>
+        </div>
+
+        {/* Content */}
+        <div className='p-4'>
+          <form onSubmit={onSubmit}>
+            <div className='mb-4'>
+              <label className='block text-sm font-medium text-white mb-2' htmlFor='channel-name'>
+                Name
+              </label>
+              <input
+                id='channel-name'
+                type='text'
+                value={channelName}
+                onChange={(e) => setChannelName(e.target.value)}
+                required
+                autoComplete='off'
+                autoFocus
+                placeholder='Enter channel name...'
+                className='w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
+            </div>
+
+            <div className='mb-4'>
+              <label className='block text-sm font-medium text-white mb-2' htmlFor='channel-description'>
+                Description
+              </label>
+              <input
+                id='channel-description'
+                type='text'
+                value={channelDescription}
+                onChange={(e) => setChannelDescription(e.target.value)}
+                required
+                autoComplete='off'
+                placeholder='Enter channel description...'
+                className='w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
+            </div>
+
+            <div className='flex items-center space-x-2 mb-6'>
+              <input
+                id='is-private'
+                type='checkbox'
+                checked={isPrivate}
+                onChange={() => setIsPrivate((prev) => !prev)}
+                className='h-4 w-4 text-slate-500 bg-slate-600 border-gray-500 focus:ring-slate-500'
+              />
+              <label htmlFor='is-private' className='text-sm text-white'>
+                Private Channel
+              </label>
+            </div>
+
+            <div className='flex justify-end space-x-3'>
+              <button
+                type='button'
+                onClick={handleClose}
+                className='px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded transition-colors'
+              >
+                Cancel
+              </button>
+              <button
+                type='submit'
+                className='px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded transition-colors'
+              >
+                Create Channel
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
