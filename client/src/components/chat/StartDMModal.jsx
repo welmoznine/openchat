@@ -28,11 +28,6 @@ const StartDMModal = ({
     return onlineUser?.status?.toLowerCase() || 'offline'
   }
 
-  // Check if user already has conversation history
-  const hasExistingConversation = (userId) => {
-    return existingContacts.some(contact => contact.id === userId)
-  }
-
   const handleStartDM = (user) => {
     onStartDM(user.id, user)
     setShowModal(false)
@@ -87,7 +82,6 @@ const StartDMModal = ({
               <div className='space-y-1'>
                 {filteredUsers.map((user) => {
                   const status = getUserStatus(user.id)
-                  const hasConversation = hasExistingConversation(user.id)
                   const userInitials = generateUserInitials(user.username)
                   const userBgColor = generateUserColor(user.username)
 
@@ -108,11 +102,6 @@ const StartDMModal = ({
                           <span className='text-white font-medium truncate'>
                             {user.username}
                           </span>
-                          {hasConversation && (
-                            <span className='text-xs text-gray-400 bg-slate-600 px-1.5 py-0.5 rounded'>
-                              History
-                            </span>
-                          )}
                         </div>
 
                         {/* Status */}
