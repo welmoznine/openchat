@@ -44,7 +44,7 @@ const handleTypingStart = (socket, data, connectedUsers) => {
         userId: user.userId,
         messageType: 'direct_message',
         targetId: otherUserId,
-        dmRoom: dmRoom,
+        dmRoom,
         isTyping: true,
         timestamp: user.typingStartedAt,
       })
@@ -110,7 +110,7 @@ const handleTypingStop = (socket, data, connectedUsers) => {
         userId: user.userId,
         messageType: 'direct_message',
         targetId: otherUserId,
-        dmRoom: dmRoom,
+        dmRoom,
         isTyping: false,
         timestamp: user.typingStoppedAt,
       })
@@ -147,7 +147,7 @@ const cleanupTypingStatus = (socket, user, connectedUsers) => {
           userId: user.userId,
           channel: user.typingInChannel,
           isTyping: false,
-          timestamp: timestamp,
+          timestamp,
           reason: 'user_disconnected',
         })
 
@@ -163,9 +163,9 @@ const cleanupTypingStatus = (socket, user, connectedUsers) => {
           userId: user.userId,
           messageType: 'direct_message',
           targetId: user.typingInDM,
-          dmRoom: dmRoom,
+          dmRoom,
           isTyping: false,
-          timestamp: timestamp,
+          timestamp,
           reason: 'user_disconnected',
         })
 
