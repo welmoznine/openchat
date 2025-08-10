@@ -28,12 +28,8 @@ export const formatMessagesForDisplay = (messages, user) => {
 
 /**
  * Formats the current user's data for display in the UI (e.g., sidebar, profile chip).
- *
- * @param {Object} user - The currently logged-in user object.
- * @param {boolean} socketConnected - Indicates if the socket is connected.
- * @returns {Object|null} - Formatted user object or null if user is not logged in.
  */
-export const formatCurrentUserData = (user, socketConnected, userStatus) => {
+export const formatCurrentUserData = (user) => {
   return user
     ? {
         name: user.username, // User's name
@@ -45,32 +41,29 @@ export const formatCurrentUserData = (user, socketConnected, userStatus) => {
 }
 
 /**
- * Formats the list of connected users into direct messaging UI entries.
- *
- * @param {Array} connectedUsers - List of users currently connected via socket.
- * @param {Object} user - The currently logged-in user.
- * @returns {Array} - List of formatted direct message UI entries.
+ * Formats the list of users for display in the DM list.
  */
-export const formatDirectMessages = (connectedUsers, user) => {
-  return connectedUsers
-    .filter(connectedUser => connectedUser && connectedUser.userId !== user?.id)
-    .map((connectedUser) => ({
+export const formatUsersForDMList = (users, connectedUsers) => {
+  return users.map((user) => {
+    // Find the corresponding connected user to get the online status
+    const onlineUser = connectedUsers.find(u => u.userId === user.id)
+    const status = onlineUser?.status?.toLowerCase() || 'offline'
+
+    return {
       user: {
-        id: connectedUser.userId,
-        name: connectedUser.username,
-        initials: generateUserInitials(connectedUser.username),
-        bgColor: generateUserColor(connectedUser.username),
-        status: connectedUser.status?.toLowerCase() || 'Online',
+        id: user.id,
+        name: user.username,
+        initials: generateUserInitials(user.username),
+        bgColor: generateUserColor(user.username),
+        status,
       },
       unreadCount: 0,
-    }))
+    }
+  })
 }
 
 /**
  * Formats the list of connected users into member status chips for display.
- *
- * @param {Array} connectedUsers - List of users currently connected.
- * @returns {Array} - List of formatted online member objects.
  */
 export const formatOnlineMembers = (connectedUsers) => {
   if (!Array.isArray(connectedUsers)) {

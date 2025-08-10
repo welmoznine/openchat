@@ -17,13 +17,15 @@ import { useScrollToBottom } from '../hooks/messages/useScrollToBottom'
 import { useActiveDirectMessage } from '../hooks/messages/useActiveDirectMessage'
 import { useDirectMessages } from '../hooks/messages/useDirectMessages'
 import { useDeleteMessages } from '../hooks/messages/useDeleteMessages'
+import { useAllUsers } from '../hooks/users/useAllUsers'
+import { useDMContacts } from '../hooks/messages/useDMContacts'
 
 // Import utility functions
 import {
   formatMessagesForDisplay,
   formatCurrentUserData,
-  formatDirectMessages,
-  formatOnlineMembers
+  formatOnlineMembers,
+  formatUsersForDMList
 } from '../utils/chatHelpers'
 
 // Import components
@@ -52,7 +54,11 @@ function ChatPage () {
     refreshChannels,
   } = useUserChannels() // Custom hook for channels
 
-  const { activeDmId, setActiveDmId, activeDmUser } = useActiveDirectMessage(connectedUsers, user?.id) // Active DM management
+  // DM management hooks
+  const { users: allUsers, loading: usersLoading } = useAllUsers()
+  const { contacts: dmContacts, addContact: addDMContact } = useDMContacts()
+
+  const { activeDmId, setActiveDmId, activeDmUser } = useActiveDirectMessage(connectedUsers, dmContacts, allUsers, user?.id) // Active DM management
 
   const { activeChannelId, setActiveChannelId, activeChannel } = useActiveChannel(channels, activeDmId) // Active channel management
   const {
@@ -85,8 +91,8 @@ function ChatPage () {
 
   const isDMActive = activeDmId !== null
 
-  // Select the correct messages, loading state, and error
-  const currentMessages = isDMActive ? dmMessages : messages // 'messages' comes from useChannelMessages
+  // Select the correct list of messages
+  const currentMessages = isDMActive ? dmMessages : messages
 
   // Select the correct chat name and placeholder for the UI
   const chatName = isDMActive ? activeDmUser?.username : activeChannel?.name
@@ -109,7 +115,7 @@ function ChatPage () {
   // Format data for display
   const formattedMessages = formatMessagesForDisplay(currentMessages, user)
   const currentUserData = formatCurrentUserData(user, socketConnected)
-  const directMessages = formatDirectMessages(connectedUsers, user)
+  const formattedDMContacts = formatUsersForDMList(dmContacts, connectedUsers)
   const onlineMembers = formatOnlineMembers(connectedUsers)
 
   // Handle message deletion
@@ -148,6 +154,22 @@ function ChatPage () {
     }
   }
 
+  // Handle starting a new DM conversation
+  const handleStartNewDM = (userId, userInfo) => {
+    // Add to contacts if not already there
+    const existingContact = dmContacts.find(c => c.id === userId)
+    if (!existingContact) {
+      addDMContact({
+        id: userId,
+        username: userInfo.username,
+        status: userInfo.status || 'offline'
+      })
+    }
+
+    // Switch to the DM conversation
+    handleDirectMessageSelect(userId)
+  }
+
   const handleStatusChange = (newStatus) => {
     setUserStatus(newStatus)
     if (socket && socket.connected) {
@@ -174,7 +196,7 @@ function ChatPage () {
       </div>
     )
   }
-  if (channelsLoading) {
+  if (channelsLoading || usersLoading) {
     return (
       <div className='h-screen flex items-center justify-center bg-slate-800 text-white'>
         <div>Loading channels...</div>
@@ -219,7 +241,7 @@ function ChatPage () {
             activeChannel={activeChannel?.id || null}
             activeDmId={activeDmId}
             onChannelSelect={handleChannelSelect}
-            directMessages={directMessages}
+            dmContacts={formattedDMContacts}
             onDirectMessageSelect={handleDirectMessageSelect}
             onlineMembers={onlineMembers}
             onLogout={handleLogout}
@@ -229,6 +251,9 @@ function ChatPage () {
             onChannelUpdate={refreshChannels}
             currentStatus={userStatus}
             onStatusChange={handleStatusChange}
+            allUsers={allUsers}
+            connectedUsers={connectedUsers}
+            onStartNewDM={handleStartNewDM}
           />
         </div>
         <div className='flex flex-1 flex-col bg-slate-700 h-screen'>

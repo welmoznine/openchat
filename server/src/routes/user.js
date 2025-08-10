@@ -504,4 +504,91 @@ router.delete('/direct-messages/:messageId', async (req, res) => {
   }
 })
 
+// Get all users (excluding current user) for starting new DM conversations
+router.get('/all-users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: req.user.id } // Exclude current user
+      },
+      select: {
+        id: true,
+        username: true,
+        status: true,
+        lastLoginAt: true
+      },
+      orderBy: {
+        username: 'asc' // Alphabetical order
+      }
+    })
+    res.json(users)
+  } catch (error) {
+    console.error('Error fetching all users:', error)
+    res.status(500).json({ error: 'Failed to fetch users' })
+  }
+})
+
+// Get users with existing DM conversation history
+router.get('/dm-contacts', async (req, res) => {
+  try {
+    const conversations = await prisma.directMessage.findMany({
+      where: {
+        OR: [
+          { senderId: req.user.id },
+          { receiverId: req.user.id }
+        ]
+      },
+      select: {
+        senderId: true,
+        receiverId: true,
+        createdAt: true,
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            status: true
+          }
+        },
+        receiver: {
+          select: {
+            id: true,
+            username: true,
+            status: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    // Process to get unique contacts with most recent conversation time
+    const contactsMap = new Map()
+
+    conversations.forEach(msg => {
+      const contact = msg.senderId === req.user.id ? msg.receiver : msg.sender
+      const existingContact = contactsMap.get(contact.id)
+
+      if (!existingContact || new Date(msg.createdAt) > new Date(existingContact.lastMessageAt)) {
+        contactsMap.set(contact.id, {
+          id: contact.id,
+          username: contact.username,
+          status: contact.status,
+          lastMessageAt: msg.createdAt
+        })
+      }
+    })
+
+    // Convert to array and sort by most recent conversation
+    const contacts = Array.from(contactsMap.values()).sort((a, b) =>
+      new Date(b.lastMessageAt) - new Date(a.lastMessageAt)
+    )
+
+    res.json(contacts)
+  } catch (error) {
+    console.error('Error fetching DM contacts:', error)
+    res.status(500).json({ error: 'Failed to fetch DM contacts' })
+  }
+})
+
 export default router
