@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { XMarkIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 import { generateUserInitials, generateUserColor } from '../../utils/chatUtils.js'
 
 const StartDMModal = ({
@@ -51,9 +52,7 @@ const StartDMModal = ({
             onClick={handleClose}
             className='text-gray-400 hover:text-white transition-colors'
           >
-            <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-            </svg>
+            <XMarkIcon className='w-6 h-6' />
           </button>
         </div>
 
@@ -123,9 +122,7 @@ const StartDMModal = ({
                       </div>
 
                       {/* Arrow */}
-                      <svg className='w-4 h-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-                      </svg>
+                      <ChevronRightIcon className='w-4 h-4 text-gray-400' />
                     </button>
                   )
                 })}

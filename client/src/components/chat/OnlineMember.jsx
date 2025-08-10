@@ -12,7 +12,7 @@ const OnlineMember = ({ user }) => {
   const statusLabel = statusLabels[user.status] ? ` (${statusLabels[user.status]})` : ''
 
   return (
-    <div className='flex items-center space-x-2'>
+    <div className='flex items-center space-x-2 px-2'>
       <Avatar
         initials={user.initials}
         bgColor={user.bgColor}

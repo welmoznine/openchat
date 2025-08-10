@@ -34,6 +34,7 @@ import Sidebar from '../components/chat/Sidebar'
 import ChatHeader from '../components/chat/ChatHeader'
 import MessageInput from '../components/chat/MessageInput'
 import Notification from '../components/chat/Notification'
+import LoadingSpinner from '../components/chat/LoadingSpinner'
 
 function ChatPage () {
   // State variables
@@ -188,22 +189,26 @@ function ChatPage () {
     setShowSidebar((prev) => !prev)
   }
 
-  // Add loading state check
+  // Loading states with spinner and optional message
   if (!user) {
     return (
       <div className='h-screen flex items-center justify-center bg-slate-800 text-white'>
-        <div className='text-lg'>Loading...</div>
+        <LoadingSpinner size='lg' message='' />
       </div>
     )
   }
   if (channelsLoading || usersLoading) {
     return (
       <div className='h-screen flex items-center justify-center bg-slate-800 text-white'>
-        <div>Loading channels...</div>
+        <LoadingSpinner
+          size='lg'
+          message={channelsLoading ? '' : ''}
+        />
       </div>
     )
   }
 
+  // Error handling
   if (channelsError) {
     return (
       <div className='h-screen flex items-center justify-center bg-slate-800 text-red-500'>
@@ -212,13 +217,6 @@ function ChatPage () {
     )
   }
 
-  if (msgLoading) {
-    return (
-      <div className='h-screen flex items-center justify-center bg-slate-800 text-white'>
-        <div>Loading messages...</div>
-      </div>
-    )
-  }
   if (msgError) {
     return (
       <div className='h-screen flex items-center justify-center bg-slate-800 text-red-500'>
@@ -264,33 +262,42 @@ function ChatPage () {
             toggleSidebar={toggleSidebar}
           />
 
-          <div className='flex-1 overflow-y-auto px-6 py-4 space-y-4'>
-            {formattedMessages.map((message) => (
-              <Message key={message.id} message={message} onDeleteMessage={handleDeleteMessage} socket={socket} />
-            ))}
-
-            {/* Typing indicators */}
-            {typingUsers.size > 0 && (
-              <div className='flex space-x-3 px-2 py-1'>
-                <div className='w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0'>
-                  <span className='text-sm text-white'>💭</span>
+          <div className='flex-1 overflow-y-auto px-6 py-4 messages-container'>
+            {msgLoading
+              ? (
+                <div className='h-full flex items-center justify-center'>
+                  <LoadingSpinner size='lg' message='' />
                 </div>
-                <div className='flex-1 min-w-0'>
-                  <div className='flex items-baseline space-x-2 mb-1'>
-                    <span className='font-medium text-white'>
-                      {Array.from(typingUsers).join(', ')}
-                    </span>
-                  </div>
-                  <div className='text-gray-300 italic'>
-                    {typingUsers.size === 1 ? 'is' : 'are'} typing...
-                  </div>
-                </div>
-              </div>
-            )}
+                )
+              : (
+                <div className='space-y-4'>
+                  {formattedMessages.map((message) => (
+                    <Message key={message.id} message={message} onDeleteMessage={handleDeleteMessage} socket={socket} />
+                  ))}
 
-            <div ref={messagesEndRef} />
+                  {/* Typing indicators */}
+                  {typingUsers.size > 0 && (
+                    <div className='flex space-x-3 px-2 py-1'>
+                      <div className='w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center flex-shrink-0'>
+                        <span className='text-sm text-white'>💭</span>
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <div className='flex items-baseline space-x-2 mb-1'>
+                          <span className='font-medium text-white'>
+                            {Array.from(typingUsers).join(', ')}
+                          </span>
+                        </div>
+                        <div className='text-gray-300 italic'>
+                          {typingUsers.size === 1 ? 'is' : 'are'} typing...
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div ref={messagesEndRef} />
+                </div>
+                )}
           </div>
-
           <MessageInput
             value={currentMessage}
             onSendMessage={handleSendMessage}
@@ -299,7 +306,6 @@ function ChatPage () {
             placeholder={inputPlaceholder}
           />
         </div>
-
         {notification && (
           <div className='fixed top-4 right-4 z-50 space-y-2'>
             <Notification

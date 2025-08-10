@@ -51,7 +51,7 @@ const Channel = ({ channel, name, isActive = false, isPrivate, unreadCount = 0, 
                 e.stopPropagation() // Prevents bubbling to the document
                 setShowChannelMenu((prev) => !prev)
               }}
-              className='h-6 w-6 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200 cursor-pointer'
+              className='h-6 w-6 text-gray-500 opacity-60 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 cursor-pointer'
             />
           )}
           {unreadCount > 0 && (
