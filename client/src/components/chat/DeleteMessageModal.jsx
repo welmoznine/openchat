@@ -1,3 +1,4 @@
+import { XMarkIcon } from '@heroicons/react/24/outline'
 import { useDeleteMessages } from '../../hooks/messages/useDeleteMessages'
 
 export default function DeleteMessageModal ({
@@ -42,48 +43,59 @@ export default function DeleteMessageModal ({
     }
   }
 
+  const handleClose = () => {
+    setShowDeleteMessage(false)
+  }
+
   return (
-    <div className='fixed inset-0 z-50 flex items-start pt-65 justify-center text-sm'>
-      {/* Overlay */}
-      <div
-        className='absolute inset-0 bg-black/20 backdrop-blur-xs'
-        onClick={() => setShowDeleteMessage(false)}
-      />
-      {/* Modal Content */}
-      <div className='relative z-50 bg-slate-800 border border-slate-600 rounded-lg shadow-2xl w-100 py-4 px-6'>
-        <h2 className='text-lg mb-4 text-red-400'>Delete Message</h2>
+    <div className='fixed inset-0 bg-opacity-50 flex items-center justify-center z-50 bg-black/20 backdrop-blur-xs'>
+      <div className='bg-slate-800 rounded-lg w-full max-w-md mx-4 flex flex-col'>
+        {/* Header */}
+        <div className='flex items-center justify-between p-4 border-b border-slate-700'>
+          <h2 className='text-lg font-semibold text-red-400'>Delete Message</h2>
+          <button
+            onClick={handleClose}
+            className='text-gray-400 hover:text-white transition-colors'
+          >
+            <XMarkIcon className='w-6 h-6' />
+          </button>
+        </div>
 
-        {error && (
-          <div className='mb-4 p-2 bg-red-900 border border-red-700 rounded text-red-200 text-sm'>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={onSubmit}>
-          <div className='text-gray-300 mb-4'>
-            Are you sure you want to delete this message?
-            <div className='mt-2 p-2 bg-slate-700 rounded text-sm italic'>
-              "{message.content}"
+        {/* Content */}
+        <div className='p-4'>
+          {error && (
+            <div className='mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-200 text-sm'>
+              {error}
             </div>
-          </div>
-          <div className='flex justify-end space-x-3'>
-            <button
-              type='button'
-              onClick={() => setShowDeleteMessage(false)}
-              className='mt-5 bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded cursor-pointer'
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type='submit'
-              className='mt-5 bg-red-700 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded cursor-pointer disabled:opacity-50'
-              disabled={loading}
-            >
-              {loading ? 'Deleting...' : 'Confirm'}
-            </button>
-          </div>
-        </form>
+          )}
+
+          <form onSubmit={onSubmit}>
+            <div className='text-gray-300 mb-4'>
+              Are you sure you want to delete this message?
+              <div className='mt-3 p-3 bg-slate-700 rounded text-sm italic border-l-4 border-slate-600'>
+                "{message.content}"
+              </div>
+            </div>
+
+            <div className='flex justify-end space-x-3'>
+              <button
+                type='button'
+                onClick={handleClose}
+                className='px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded transition-colors'
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type='submit'
+                className='px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-medium rounded transition-colors disabled:opacity-50'
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   )
