@@ -92,9 +92,6 @@ const Sidebar = ({
           <div className='space-y-1'>
             {/* Existing DM conversations */}
             {dmContacts.map((contact) => {
-              const onlineUser = connectedUsers.find(u => u.userId === contact.user.id)
-              // const status = onlineUser?.status?.toLowerCase() || 'offline'
-
               return (
                 <DirectMessageItem
                   key={contact.user.id}
