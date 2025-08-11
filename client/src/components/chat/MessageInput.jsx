@@ -44,8 +44,10 @@ const MessageInput = ({
     const textarea = textareaRef.current
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
-    const newMessage = message.slice(0, start) + emoji + message.slice(end)
+    const currentValue = textarea.value || ''
+    const newMessage = currentValue.slice(0, start) + emoji + currentValue.slice(end)
     setMessage(newMessage)
+    setShowEmojiPicker(false)
 
     setTimeout(() => {
       textarea.focus()
