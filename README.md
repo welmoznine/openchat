@@ -4,11 +4,15 @@
 
 [![CI](https://github.com/yshrkume/openchat/actions/workflows/ci.yml/badge.svg)](https://github.com/yshrkume/openchat/actions/workflows/ci.yml)
 
-An open-source, fully customizable web-based chat platform that bridges the gap between specialized communication tools like Slack and Discord.
+OpenChat is a real-time, team chat platform that bridges the gap between Slack-like channels and Discord-style direct messaging.  It’s a fully functional web-based application, complete with registration, and the ability to login and logout. It allows for real-time direct messaging between users, notifications for new messages/mentions, member lists, user status indicators, as well as basic emoji support.  There is also support for creation of public and private channels. It emphasizes responsive UX, reliable delivery, and an architecture that’s easy to develop locally and deploy to the cloud.
 
 ## Live Demo
 
 **Production**: https://openchat-frontend-494715638539.us-west1.run.app/
+
+## Preview
+<img width="2557" height="1351" alt="Screenshot from 2025-08-11 21-15-32" src="https://github.com/user-attachments/assets/f9879d25-9f3a-4a84-947c-ebf82eca43ea" />
+
 
 ## Team Members
 
