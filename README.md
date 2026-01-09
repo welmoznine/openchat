@@ -8,6 +8,7 @@ OpenChat is a real-time, team chat platform that bridges the gap between Slack-l
 
 ## Demo
 **Video Demo**: https://www.youtube.com/watch?v=wk014RX34rU
+
 **Production** (discontinued): ~~https://openchat-frontend-494715638539.us-west1.run.app/~~
 
 ## Preview
